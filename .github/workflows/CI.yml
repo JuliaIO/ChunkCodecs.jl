@@ -116,7 +116,7 @@ jobs:
             (;path="${{ matrix.package }}"),
             (;path="ChunkCodecCore"),
             (;path="ChunkCodecTests"),
-          ])
+          ]))
           Pkg.update()
           Pkg.test(TOML.parsefile("${{ matrix.package }}/Project.toml")["name"]; coverage=true, allow_reresolve=false)
       - uses: julia-actions/julia-processcoverage@v1
