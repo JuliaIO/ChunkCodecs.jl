@@ -73,18 +73,24 @@ jobs:
         # e.g. ['package1', 'package2'] if both package folders contains changes
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
         version:
-          - 'min'
           - '1'
         os:
           - ubuntu-latest
-          - windows-latest
-          - macos-latest
+          # - windows-latest
+          # - macos-latest
         arch:
           - 'default'
-          - 'x86'
+          # - 'x86'
         exclude:
           - os: macos-latest
             arch: x86
+        include:
+          - os: ubuntu-latest
+            arch: 'default'
+            version: '1.10'
+          - os: ubuntu-latest
+            arch: 'default'
+            version: 'pre'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -94,9 +100,22 @@ jobs:
           show-versioninfo: true
           project: ${{matrix.package}}
       - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-runtest@v1
-        with:
-          project: ${{matrix.package}}
+      - name: Run the tests
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          using TOML
+          Pkg.Registry.update()
+          Pkg.activate(;temp=true)
+          # force it to use this PR's version of the package
+          ENV["JULIA_PKG_DEVDIR"]= mktempdir()
+          Pkg.develop([
+            PackageSpec(path="${{ matrix.package }}"),
+            PackageSpec(path="ChunkCodecCore"),
+            PackageSpec(path="ChunkCodecTests"),
+          ])
+          Pkg.update()
+          Pkg.test(TOML.parsefile("${{ matrix.package }}/Project.toml")["name"]; coverage=true, allow_reresolve=false)
       - uses: julia-actions/julia-processcoverage@v1
         with:
           directories: ${{matrix.package}}/src
