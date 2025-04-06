@@ -11,3 +11,6 @@ Lz4_jll = "5ced341a-0733-55b8-9ab6-a4889d929147"
 ChunkCodecCore = "0.4"
 Lz4_jll = "1"
 julia = "1.10"
+
+[workspace]
+projects = ["test"]

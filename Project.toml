@@ -1,0 +1,11 @@
+[workspace]
+projects = [
+    "ChunkCodecCore",
+    "ChunkCodecTests",
+    "LibBlosc",
+    "LibBzip2",
+    "LibLz4",
+    "LibSnappy",
+    "LibZlib",
+    "LibZstd",
+]
