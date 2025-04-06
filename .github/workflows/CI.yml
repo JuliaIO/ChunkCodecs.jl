@@ -92,6 +92,7 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
           show-versioninfo: true
+          project: ${{matrix.package}}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-runtest@v1
         with:
