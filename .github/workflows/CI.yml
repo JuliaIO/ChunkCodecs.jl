@@ -73,7 +73,9 @@ jobs:
         # e.g. ['package1', 'package2'] if both package folders contains changes
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
         version:
+          - '1.10'
           - '1'
+          - 'pre'
         os:
           - ubuntu-latest
           # - windows-latest
@@ -84,13 +86,14 @@ jobs:
         exclude:
           - os: macos-latest
             arch: x86
-        include:
-          - os: ubuntu-latest
-            arch: 'default'
-            version: '1.10'
-          - os: ubuntu-latest
-            arch: 'default'
-            version: 'pre'
+          - os: macos-latest
+            version: 1.10
+          - os: macos-latest
+            version: pre
+          - os: windows-latest
+            version: 1.10
+          - os: windows-latest
+            version: pre
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -109,10 +112,10 @@ jobs:
           Pkg.activate(;temp=true)
           # force it to use this PR's version of the package
           ENV["JULIA_PKG_DEVDIR"]= mktempdir()
-          Pkg.develop([
-            PackageSpec(path="${{ matrix.package }}"),
-            PackageSpec(path="ChunkCodecCore"),
-            PackageSpec(path="ChunkCodecTests"),
+          Pkg.develop(unique([
+            (;path="${{ matrix.package }}"),
+            (;path="ChunkCodecCore"),
+            (;path="ChunkCodecTests"),
           ])
           Pkg.update()
           Pkg.test(TOML.parsefile("${{ matrix.package }}/Project.toml")["name"]; coverage=true, allow_reresolve=false)
