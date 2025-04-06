@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v0.4.1](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v0.4.1) - 2025-04-06
+
+- Added support for Julia 1.10 [#33](https://github.com/JuliaIO/ChunkCodecs.jl/pull/33)
+
 ## [v0.4.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v0.4.0) - 2025-02-24
 
 ### BREAKING the `codec` function is replaced with a `.codec` property [#11](https://github.com/JuliaIO/ChunkCodecs.jl/pull/11)
