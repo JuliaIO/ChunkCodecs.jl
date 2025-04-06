@@ -1,7 +1,7 @@
 name = "ChunkCodecLibBlosc"
 uuid = "c6a955be-ab7f-4fbb-b38f-caf93db6b928"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 Blosc_jll = "0b7ba130-8d10-5ba8-a3d6-c5182647fed9"
