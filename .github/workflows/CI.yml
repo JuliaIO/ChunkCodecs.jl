@@ -85,15 +85,18 @@ jobs:
           - 'x86'
         exclude:
           - os: macos-latest
-            arch: x86
+            arch: 'x86'
           - os: macos-latest
-            version: 1.10
+            version: '1.10'
           - os: macos-latest
-            version: pre
+            version: 'pre'
           - os: windows-latest
-            version: 1.10
+            version: '1.10'
           - os: windows-latest
-            version: pre
+            version: 'pre'
+          - os: ubuntu-latest
+            version: '1.10'
+            arch: 'x86'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
