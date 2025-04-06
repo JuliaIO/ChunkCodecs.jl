@@ -78,11 +78,11 @@ jobs:
           - 'pre'
         os:
           - ubuntu-latest
-          # - windows-latest
-          # - macos-latest
+          - windows-latest
+          - macos-latest
         arch:
           - 'default'
-          # - 'x86'
+          - 'x86'
         exclude:
           - os: macos-latest
             arch: x86
