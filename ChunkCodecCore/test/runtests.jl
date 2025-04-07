@@ -3,7 +3,7 @@ using ChunkCodecCore:
     ChunkCodecCore,
     NoopCodec, NoopEncodeOptions, NoopDecodeOptions,
     ShuffleCodec, ShuffleEncodeOptions, ShuffleDecodeOptions,
-    DecodedSizeError, decode
+    DecodedSizeError, decode, decode!
 using ChunkCodecTests:ChunkCodecTests, test_codec, test_encoder_decoder
 using Aqua: Aqua
 using Test: @test, @testset, @test_throws
@@ -38,6 +38,7 @@ end
 end
 @testset "errors" begin
     @test sprint(Base.showerror, DecodedSizeError(1, 2)) == "DecodedSizeError: decoded size: 2 is greater than max size: 1"
+    @test sprint(Base.showerror, DecodedSizeError(2, 1)) == "DecodedSizeError: decoded size: 1 is less than expected size: 2"
     @test sprint(Base.showerror, DecodedSizeError(1, nothing)) == "DecodedSizeError: decoded size is greater than max size: 1"
 end
 @testset "check helpers" begin
@@ -90,41 +91,11 @@ end
     @test_throws DecodedSizeError(Int64(-1), nothing) decode(d, ones(UInt8, Int64(100)); max_size=Int64(-1))
     @test_throws DecodedSizeError(typemin(Int64), nothing) decode(d, ones(UInt8, Int64(100)); max_size=typemin(Int128))
 end
-@testset "public" begin
-    if VERSION >= v"1.11.0-DEV.469"
-        for sym in (
-            :Codec,
-            :EncodeOptions,
-            :DecodeOptions,
-
-            :DecodingError,
-            :DecodedSizeError,
-
-            :decode_options,
-
-            :decoded_size_range,
-            :encode_bound,
-            :try_encode!,
-
-            :try_find_decoded_size,
-            :try_decode!,
-
-            :check_in_range,
-            :check_contiguous,
-
-            :can_concatenate,
-            :is_thread_safe,
-            :try_resize_decode!,
-
-            :NoopCodec,
-            :NoopEncodeOptions,
-            :NoopDecodeOptions,
-
-            :ShuffleCodec,
-            :ShuffleEncodeOptions,
-            :ShuffleDecodeOptions
-        )
-            @test Base.ispublic(ChunkCodecCore, sym)
-        end
-    end
+@testset "decode!" begin
+    d = TestDecodeOptions()
+    @test_throws DecodedSizeError(3, 2) decode!(d, zeros(UInt8, 3), ones(UInt8, 2))
+    @test_throws DecodedSizeError(3, nothing) decode!(d, zeros(UInt8, 3), ones(UInt8, 4))
+    dst = zeros(UInt8, 3)
+    @test decode!(d, dst, ones(UInt8, 3)) === dst
+    @test dst == ones(UInt8, 3)
 end

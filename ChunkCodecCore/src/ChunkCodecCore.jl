@@ -11,6 +11,7 @@ if VERSION >= v"1.11.0-DEV.469"
 
             DecodingError,
             DecodedSizeError,
+            decode!,
 
             decode_options,
 
