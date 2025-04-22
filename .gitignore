@@ -9,3 +9,4 @@ fixture.tar.gz
 fixture
 .CondaPkg
 *.cov
+/temp/

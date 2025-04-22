@@ -3,30 +3,26 @@
 [![CI](https://github.com/JuliaIO/ChunkCodecs.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaIO/ChunkCodecs.jl/actions/workflows/CI.yml)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-## Warning: ChunkCodecs is currently a WIP and its API may drastically change at any time.
-## Warning: There is not enough compatibility testing, so do not save important data using this package yet.
+## Warning: ChunkCodecs is currently a WIP. Suggestions for major API changes are welcome.
 
 A consistent Julia interface for lossless encoding and decoding of bytes in memory.
 
-## Repository directories
+## Available Formats
 
-This monorepo holds a number of different Julia packages:
-
-- `ChunkCodecCore`: defines the interface.
-- `ChunkCodecTests`: defines tests for the interface.
-
-There are also a number of packages with glue code to implement the interface for various C libraries.
-
-- `LibBlosc`
-- `LibBzip2`
-- `LibLz4`
-- `LibSnappy`
-- `LibZlib`
-- `LibZstd`
-
-Each package contains basic tests.
-
-There is also a `test` directory for slower compatibility tests.
+| Name | Other Names | Package | Encoding | Decoding |
+|---|---|---|---|---|
+| Zstd | .zst RFC8878 | ChunkCodecLibZstd | ✅ | ✅ |
+| Zlib | RFC1950 | ChunkCodecLibZlib | ✅ | ✅ |
+| Snappy |  | ChunkCodecLibSnappy | ✅ | ✅ |
+| Shuffle |  | ChunkCodecCore | ✅ | ✅ |
+| Noop |  | ChunkCodecCore | ✅ | ✅ |
+| LZ4Numcodecs |  | ChunkCodecLibLz4 | ✅ | ✅ |
+| LZ4Frame | .lz4 | ChunkCodecLibLz4 | ✅ | ✅ |
+| LZ4Block |  | ChunkCodecLibLz4 | ✅ | ✅ |
+| Gzip | .gz RFC1952 | ChunkCodecLibZlib | ✅ | ✅ |
+| Deflate | RFC1951 | ChunkCodecLibZlib | ✅ | ✅ |
+| BZ2 | .bz2 bzip2 | ChunkCodecLibBzip2 | ✅ | ✅ |
+| Blosc |  | ChunkCodecLibBlosc | ✅ | ✅ |
 
 ## Simple encoding and decoding
 
