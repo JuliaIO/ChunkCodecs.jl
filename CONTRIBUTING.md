@@ -59,3 +59,23 @@ For example to run
 julia --project=test -e 'import Pkg; Pkg.update()'
 julia --project=test test/imagecodecs-compat.jl
 ```
+
+## Creating a new ChunkCodec package
+
+Start by generating a new subdirectory package.
+
+If the new package is wrapping a C library use the `Lib` prefix.
+
+For example:
+
+```julia-repl
+julia> using Pkg; Pkg.generate("LibFoo")
+```
+
+Add this subdirectory to the "workspace" section of the root "Project.toml"
+
+Add the package to the ".github/workflows/CI.yml" file
+
+Adjust the new subdirectory to match the style of the existing subdirectories.
+"LibBzip2" is a good example of a streaming format. "LibSnappy" is a good example
+of a non streaming format.

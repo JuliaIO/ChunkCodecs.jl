@@ -3,6 +3,7 @@ using Test
 
 codec_packages = [
     :ChunkCodecLibBlosc,
+    :ChunkCodecLibBrotli,
     :ChunkCodecLibBzip2,
     :ChunkCodecLibLz4,
     :ChunkCodecLibSnappy,
