@@ -37,6 +37,11 @@ jobs:
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibBlosc/**
+          LibBrotli:
+            - .github/**
+            - ChunkCodecCore/**
+            - ChunkCodecTests/**
+            - LibBrotli/**
           LibBzip2:
             - .github/**
             - ChunkCodecCore/**

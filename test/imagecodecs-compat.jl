@@ -1,6 +1,7 @@
 using PythonCall
 using
     ChunkCodecLibBlosc,
+    ChunkCodecLibBrotli,
     ChunkCodecLibBzip2,
     ChunkCodecLibLz4,
     ChunkCodecLibSnappy,
@@ -12,6 +13,7 @@ using Test
 
 codecs = [
     (ChunkCodecLibBlosc.BloscEncodeOptions(),   ("blosc",   (;)), 1000),
+    (ChunkCodecLibBrotli.BrotliEncodeOptions(;quality=9),   ("brotli",   (;)), 50),
     (ChunkCodecLibBzip2.BZ2EncodeOptions(),     ("bz2",     (;)), 50),
     (ChunkCodecLibLz4.LZ4BlockEncodeOptions(),  ("lz4",     (;header=false)), 1000),
     (ChunkCodecLibLz4.LZ4NumcodecsEncodeOptions(),   ("lz4",     (;header=true)), 1000),
