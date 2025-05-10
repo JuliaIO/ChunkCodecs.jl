@@ -1,7 +1,7 @@
 name = "ChunkCodecLibBrotli"
 uuid = "653b0ff7-85b5-4442-93c1-dcc330d3ec7d"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
