@@ -1,2 +1,2 @@
-[deps]
-imagecodecs = ""
+[pip.deps]
+imagecodecs = "==2025.3.30"

@@ -405,3 +405,117 @@ function try_decode!(d::LZ4NumcodecsDecodeOptions, dst::AbstractVector{UInt8}, s
         end
     end
 end
+
+
+"""
+    struct LZ4HDF5DecodeOptions <: DecodeOptions
+    LZ4HDF5DecodeOptions(; kwargs...)
+
+LZ4 HDF5 format compression using liblz4: https://lz4.org/
+
+This is the LZ4 HDF5 format used in HDF5 Filter ID: 32004.
+
+This format is documented in https://github.com/HDFGroup/hdf5_plugins
+
+This format is NOT compatible with the `lz4` CLI.
+
+# Keyword Arguments
+
+- `codec::LZ4HDF5Codec=LZ4HDF5Codec()`
+"""
+struct LZ4HDF5DecodeOptions <: DecodeOptions
+    codec::LZ4HDF5Codec
+end
+function LZ4HDF5DecodeOptions(;
+        codec::LZ4HDF5Codec=LZ4HDF5Codec(),
+        kwargs...
+    )
+    LZ4HDF5DecodeOptions(codec)
+end
+
+is_thread_safe(::LZ4HDF5DecodeOptions) = true
+
+function try_find_decoded_size(::LZ4HDF5DecodeOptions, src::AbstractVector{UInt8})::Int64
+    if length(src) < 12
+        throw(LZ4DecodingError("unexpected end of input"))
+    else
+        decoded_size = Int64(0)
+        for i in 0:7
+            decoded_size |= Int64(src[begin+i])<<((7-i)*8)
+        end
+        if signbit(decoded_size)
+            throw(LZ4DecodingError("decoded size is negative"))
+        else
+            decoded_size
+        end
+    end
+end
+
+function unsafe_load_i32be(src_p::Ptr{UInt8})::Int32
+    r = Int32(0)
+    for i in 0:3
+        r |= Int32(unsafe_load(src_p+i))<<((3-i)*8)
+    end
+    r
+end
+
+function try_decode!(d::LZ4HDF5DecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+    check_contiguous(dst)
+    check_contiguous(src)
+    decoded_size = try_find_decoded_size(d, src)
+    src_size::Int64 = length(src)
+    dst_size::Int64 = length(dst)
+    if decoded_size > dst_size
+        return nothing
+    end
+    cconv_src = Base.cconvert(Ptr{UInt8}, src)
+    cconv_dst = Base.cconvert(Ptr{UInt8}, dst)
+    GC.@preserve cconv_src cconv_dst begin
+        src_p = Base.unsafe_convert(Ptr{UInt8}, cconv_src)
+        dst_p = Base.unsafe_convert(Ptr{UInt8}, cconv_dst)
+        src_left = src_size
+        dst_left = decoded_size
+        @assert src_left ≥ 12 # this is checked by try_find_decoded_size
+        src_left -= 8
+        src_p += 8
+        block_size = unsafe_load_i32be(src_p)
+        src_left -= 4
+        src_p += 4
+        if block_size ≤ 0
+            throw(LZ4DecodingError("block size must be greater than zero"))
+        end
+        while dst_left > 0
+            local b_size = min(Int64(block_size), dst_left)%Int32
+            if src_left < 4
+                throw(LZ4DecodingError("unexpected end of input"))
+            end
+            local c_size = unsafe_load_i32be(src_p)
+            src_left -= 4
+            src_p += 4
+            if c_size ≤ 0
+                throw(LZ4DecodingError("block compressed size must be greater than zero"))
+            end
+            if src_left < c_size
+                throw(LZ4DecodingError("unexpected end of input"))
+            end
+            if c_size == b_size # There was no compression
+                Libc.memcpy(dst_p, src_p, b_size)
+            else # do the decompression
+                local ret = unsafe_lz4_decompress(src_p, dst_p, c_size, b_size)
+                if signbit(ret)
+                    throw(LZ4DecodingError("src is malformed"))
+                elseif ret != b_size
+                    throw(LZ4DecodingError("saved decoded size is not correct"))
+                end
+            end
+            src_left -= c_size
+            src_p += c_size
+            dst_left -= b_size
+            dst_p += b_size
+        end
+        if !iszero(src_left)
+            throw(LZ4DecodingError("unexpected $(src_left) bytes after stream"))
+        end
+        return decoded_size
+    end
+end

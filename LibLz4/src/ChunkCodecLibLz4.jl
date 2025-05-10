@@ -29,9 +29,9 @@ export LZ4FrameCodec,
     LZ4NumcodecsCodec,
     LZ4NumcodecsEncodeOptions,
     LZ4NumcodecsDecodeOptions,
-    # LZ4HDF5Codec,
-    # LZ4HDF5EncodeOptions,
-    # LZ4HDF5DecodeOptions,
+    LZ4HDF5Codec,
+    LZ4HDF5EncodeOptions,
+    LZ4HDF5DecodeOptions,
     LZ4DecodingError
 
 # reexport ChunkCodecCore
@@ -106,6 +106,24 @@ See also [`LZ4NumcodecsEncodeOptions`](@ref) and [`LZ4NumcodecsDecodeOptions`](@
 struct LZ4NumcodecsCodec <: Codec
 end
 decode_options(::LZ4NumcodecsCodec) = LZ4NumcodecsDecodeOptions() # default decode options
+
+"""
+    struct LZ4HDF5Codec <: Codec
+    LZ4HDF5Codec()
+
+LZ4 HDF5 format compression using liblz4: https://lz4.org/
+
+This is the LZ4 HDF5 format used in HDF5 Filter ID: 32004.
+
+This format is documented in https://github.com/HDFGroup/hdf5_plugins
+
+This format is NOT compatible with the `lz4` CLI.
+
+See also [`LZ4HDF5EncodeOptions`](@ref) and [`LZ4HDF5DecodeOptions`](@ref)
+"""
+struct LZ4HDF5Codec <: Codec
+end
+decode_options(::LZ4HDF5Codec) = LZ4HDF5DecodeOptions() # default decode options
 
 include("encode.jl")
 include("decode.jl")

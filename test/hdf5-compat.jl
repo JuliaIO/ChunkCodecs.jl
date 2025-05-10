@@ -13,6 +13,7 @@ using Test
 import CodecBzip2
 import Blosc
 import CodecZstd
+import CodecLz4
 
 # Useful links:
 # https://support.hdfgroup.org/documentation/index.html
@@ -21,6 +22,11 @@ import CodecZstd
 
 # List of encode options and filter ids and client data
 codecs = [
+    [(
+        ChunkCodecLibLz4.LZ4HDF5EncodeOptions(;blockSize),
+        ([UInt16(32004)], [[blockSize%UInt32]]),
+        100,
+    ) for blockSize in [1:5; 2^10; 2^20; 2^30; ChunkCodecLibLz4.LZ4_MAX_INPUT_SIZE;]];
     [(
         ChunkCodecLibZstd.ZstdEncodeOptions(;compressionLevel),
         ([UInt16(32015)], [[compressionLevel%UInt32]]),

@@ -16,6 +16,7 @@ codecs = [
     (ChunkCodecLibBrotli.BrotliEncodeOptions(;quality=9),   ("brotli",   (;)), 50),
     (ChunkCodecLibBzip2.BZ2EncodeOptions(),     ("bz2",     (;)), 50),
     (ChunkCodecLibLz4.LZ4BlockEncodeOptions(),  ("lz4",     (;header=false)), 1000),
+    (ChunkCodecLibLz4.LZ4HDF5EncodeOptions(),   ("lz4h5",     (;)), 1000),
     (ChunkCodecLibLz4.LZ4NumcodecsEncodeOptions(),   ("lz4",     (;header=true)), 1000),
     (ChunkCodecLibLz4.LZ4FrameEncodeOptions(),  ("lz4f",    (;)), 1000),
     (ChunkCodecLibSnappy.SnappyEncodeOptions(),  ("snappy",    (;)), 1000),
