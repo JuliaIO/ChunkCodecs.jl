@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### BREAKING the resizing behavior in `try_resize_decode!` changed.
+
+`dst` may now be longer than the returned number of bytes even if `dst` was grown with `resize!`.
+
+`try_resize_decode!` will now only grow `dst`, never shrink it.
+
+If `max_size` is less than `length(dst)`, instead of throwing an error, `try_resize_decode!` will now act as if `max_size == length(dst)`.
+
+- Added the `grow_dst!` helper function.
+
 ## [v0.4.2](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v0.4.2) - 2025-04-07
 
 - Added the `decode!` function. [#41](https://github.com/JuliaIO/ChunkCodecs.jl/pull/41)
