@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v0.5.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v0.5.0) - 2025-05-23
+
 ### BREAKING the resizing behavior in `try_resize_decode!` changed [#45](https://github.com/JuliaIO/ChunkCodecs.jl/pull/45)
+
+`try_resize_decode!` is a `Base.readbytes!` style function where the passed in `dst` vector might be resized if needed. Before this change there was a final `resize!` to shrink `dst` to just contain output if it was resized. The main user facing function `decode` already does a final shrinking `resize!`, so requiring it in `try_resize_decode!` was redundant.
 
 `dst` may now be longer than the returned number of bytes, even if `dst` was grown with `resize!`.
 
