@@ -53,6 +53,21 @@ end
     @test_throws ArgumentError ChunkCodecCore.check_in_range(1:6; x=7)
     @test isnothing(ChunkCodecCore.check_in_range(1:6; x=6))
     @test isnothing(ChunkCodecCore.check_in_range(1:6; x=1))
+
+    x = zeros(UInt8, 0)
+    for m in [typemin(Int64), Int64(-1), Int64(0)]
+        @test isnothing(ChunkCodecCore.grow_dst!(x, m))
+        @test length(x) == 0
+    end
+    @test ChunkCodecCore.grow_dst!(x, Int64(1)) === Int64(1)
+    @test length(x) == 1
+    @test ChunkCodecCore.grow_dst!(x, typemax(Int64)) == length(x)
+    n1 = length(x)
+    @test n1 > 1
+    @test isnothing(ChunkCodecCore.grow_dst!(x, Int64(n1)))
+    @test length(x) == n1
+    @test ChunkCodecCore.grow_dst!(x, Int64(n1 + 1)) == n1 + 1
+    @test length(x) == n1 + 1
 end
 
 # version of NoopDecodeOptions that returns unknown try_find_decoded_size
