@@ -24,6 +24,7 @@ if VERSION >= v"1.11.0-DEV.469"
 
             check_in_range,
             check_contiguous,
+            grow_dst!,
 
             can_concatenate,
             is_thread_safe,

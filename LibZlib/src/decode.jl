@@ -92,9 +92,7 @@ function try_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, src::Abst
 end
 
 function try_resize_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}
-    check_in_range(Int64(0):max_size; dst_size=length(dst))
-    olb::Int64 = length(dst)
-    dst_size::Int64 = olb
+    dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     src_left::Int64 = src_size
     dst_left::Int64 = dst_size
@@ -150,17 +148,7 @@ function try_resize_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, sr
                             @assert ret != Z_BUF_ERROR
                             @assert stream.avail_in < start_avail_in || stream.avail_out < start_avail_out
                         elseif iszero(dst_left) # needs more output
-                            # grow dst or return nothing
-                            if dst_size ≥ max_size
-                                return nothing
-                            end
-                            # This inequality prevents overflow
-                            local next_size = if max_size - dst_size ≤ dst_size
-                                max_size
-                            else
-                                max(2*dst_size, Int64(1))
-                            end
-                            resize!(dst, next_size)
+                            local next_size = @something grow_dst!(dst, max_size) return nothing
                             dst_left += next_size - dst_size
                             dst_size = next_size
                             @assert dst_left > 0
@@ -173,9 +161,6 @@ function try_resize_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, sr
                             # yay done return decompressed size
                             real_dst_size = dst_size - dst_left
                             @assert real_dst_size ∈ 0:length(dst)
-                            if length(dst) > olb && length(dst) != real_dst_size
-                                resize!(dst, real_dst_size) # shrink to just contain output if it was resized.
-                            end
                             return real_dst_size
                         else
                             if can_concatenate(d.codec)

@@ -8,7 +8,7 @@ ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
 brotli_jll = "4611771a-a7d2-5e23-8d00-b1becdba1aae"
 
 [compat]
-ChunkCodecCore = "0.4"
+ChunkCodecCore = "0.5"
 brotli_jll = "1"
 julia = "1.10"
 
