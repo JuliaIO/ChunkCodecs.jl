@@ -5,6 +5,7 @@ using
     ChunkCodecLibZstd,
     ChunkCodecLibBlosc,
     ChunkCodecLibBzip2,
+    ChunkCodecLibLz4,
     ChunkCodecLibZlib,
     ChunkCodecCore
 using ChunkCodecTests: rand_test_data
