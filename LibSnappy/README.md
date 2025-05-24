@@ -7,9 +7,6 @@ using the snappy library <https://github.com/google/snappy>
 
 1. `SnappyCodec`, `SnappyEncodeOptions`, `SnappyDecodeOptions`
 
-> [!CAUTION]
-> The snappy library has [known issues](https://github.com/google/snappy/issues/201) that are currently being worked around.
-
 ## Example
 
 ```julia-repl

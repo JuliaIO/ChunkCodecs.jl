@@ -77,3 +77,10 @@ end
     c[end-5] = 0x40
     @test_throws BloscDecodingError decode(BloscDecodeOptions(), c)
 end
+@testset "public" begin
+    if VERSION >= v"1.11.0-DEV.469"
+        for sym in (:is_compressor_valid, :compcode, :compname)
+            @test Base.ispublic(ChunkCodecLibBlosc, sym)
+        end
+    end
+end

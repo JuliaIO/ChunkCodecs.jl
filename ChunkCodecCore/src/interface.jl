@@ -60,11 +60,35 @@ function decode(
         throw(DecodedSizeError(_clamp_max_size, try_find_decoded_size(d, src)))
     end
     @assert real_dst_size ∈ 0:_clamp_max_size
-    if real_dst_size < _clamp_size_hint
-        resize!(dst, real_dst_size)
-    end
-    @assert real_dst_size == length(dst)
+    @assert real_dst_size ≤ length(dst)
+    resize!(dst, real_dst_size)
     dst
+end
+
+"""
+    decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}) -> dst
+
+Decode the input data `src` into `dst` using decoder `d`.
+`d` must implement [`try_decode!`](@ref).
+
+Throw a [`DecodedSizeError`](@ref) if the decoded output size is not exactly `length(dst)`.
+
+Throw a [`DecodingError`](@ref) if decoding fails because the input data is not valid.
+
+Otherwise throw an error.
+
+Precondition: `dst` and `src` do not overlap in memory.
+
+See also [`decode`](@ref) and [`encode`](@ref)
+"""
+function decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8})
+    expected_size::Int64 = length(dst)
+    n = try_decode!(d, dst, src)
+    if n != expected_size
+        throw(DecodedSizeError(expected_size, n))
+    else
+        dst
+    end
 end
 
 """
@@ -180,55 +204,32 @@ Try to decode the input `src` into `dst` using decoder `d`.
 
 Return the size of the decoded output in `dst` if successful.
 
-If `dst` is too small, resize `dst` and try again.
-If the `max_size` limit will be passed, return `nothing`.
+`dst` can be grown using the `resize!` function to any size between one more than the original length of `dst` and `max_size`.
 
-`dst` can be resized using the `resize!` function to any size between the original length of `dst` and `max_size`.
-
-Throw an `ArgumentError` if `length(dst)` is not in `0:max_size`.
+Return `nothing` if the size of `dst` is too small to contain the decoded output and cannot be grown due to the `max_size` restriction.
 
 Precondition: `dst` and `src` do not overlap in memory.
 
 All of `dst` can be written to or used as scratch space by the decoder.
 Only the initial returned number of bytes are valid output.
-
-If the size of `dst` is increased, its length will be equal to the returned number of bytes.
 """
 function try_resize_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}
-    check_in_range(Int64(0):max_size; dst_size=length(dst))
-    olb::Int64 = length(dst)
     decoded_size = try_find_decoded_size(d, src)::Union{Nothing, Int64}
     if isnothing(decoded_size)
         while true
             ds = try_decode!(d, dst, src)::Union{Nothing, Int64}
             if isnothing(ds)
-                # grow dst
-                local cur_size::Int64 = length(dst)
-                if cur_size == max_size
-                    return
-                end
-                @assert cur_size < max_size
-                # This inequality prevents overflow
-                local next_size = if max_size - cur_size ≤ cur_size
-                    max_size
-                else
-                    max(2*cur_size, Int64(1))
-                end
-                resize!(dst, next_size)
+                @something grow_dst!(dst, max_size) return nothing
             else
                 @assert ds ∈ 0:length(dst)
-                if length(dst) > olb && length(dst) != ds
-                    @assert ds > olb
-                    resize!(dst, ds) # shrink to just contain output if it was resized.
-                end
                 return ds
             end
         end
     else
-        if decoded_size ∉ 0:max_size
-            return
-        end
-        if decoded_size > olb
+        if decoded_size > length(dst)
+            if decoded_size > max_size
+                return nothing
+            end
             resize!(dst, decoded_size)
         end
         real_dst_size = something(try_decode!(d, dst, src))
@@ -273,4 +274,25 @@ function check_in_range(range; kwargs...)
             throw(ArgumentError("$(k) ∈ $(range) must hold. Got\n$(k) => $(v)"))
         end
     end
+end
+
+"""
+    grow_dst!(dst::AbstractVector{UInt8}, max_size::Int64)::Union{Nothing, Int64}
+
+Grow the destination vector `dst` to a size between its current size and `max_size`.
+Return the new size of `dst` if it was grown, or `nothing` if it could not be grown due to the `max_size` restriction.
+"""
+function grow_dst!(dst::AbstractVector{UInt8}, max_size::Int64)::Union{Nothing, Int64}
+    cur_size::Int64 = length(dst)
+    if cur_size ≥ max_size
+        return
+    end
+    # This inequality prevents overflow
+    next_size::Int64 = if max_size - cur_size ≤ cur_size
+        max_size
+    else
+        max(2*cur_size, Int64(1))
+    end
+    resize!(dst, next_size)
+    return next_size
 end

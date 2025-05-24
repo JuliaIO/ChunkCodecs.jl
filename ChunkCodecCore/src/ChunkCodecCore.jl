@@ -2,36 +2,43 @@ module ChunkCodecCore
 
 export decode, encode
 
-public Codec
-public EncodeOptions
-public DecodeOptions
+if VERSION >= v"1.11.0-DEV.469"
+    eval(Meta.parse("""
+        public
+            Codec,
+            EncodeOptions,
+            DecodeOptions,
 
-public DecodingError
-public DecodedSizeError
+            DecodingError,
+            DecodedSizeError,
+            decode!,
 
-public decode_options
+            decode_options,
 
-public decoded_size_range
-public encode_bound
-public try_encode!
+            decoded_size_range,
+            encode_bound,
+            try_encode!,
 
-public try_find_decoded_size
-public try_decode!
+            try_find_decoded_size,
+            try_decode!,
 
-public check_in_range
-public check_contiguous
+            check_in_range,
+            check_contiguous,
+            grow_dst!,
 
-public can_concatenate
-public is_thread_safe
-public try_resize_decode!
+            can_concatenate,
+            is_thread_safe,
+            try_resize_decode!,
 
-public NoopCodec
-public NoopEncodeOptions
-public NoopDecodeOptions
+            NoopCodec,
+            NoopEncodeOptions,
+            NoopDecodeOptions,
 
-public ShuffleCodec
-public ShuffleEncodeOptions
-public ShuffleDecodeOptions
+            ShuffleCodec,
+            ShuffleEncodeOptions,
+            ShuffleDecodeOptions
+    """))
+end
 
 include("types.jl")
 include("errors.jl")

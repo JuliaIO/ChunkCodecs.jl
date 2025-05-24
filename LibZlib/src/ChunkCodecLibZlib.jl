@@ -8,6 +8,7 @@ using ChunkCodecCore:
     DecodeOptions,
     check_contiguous,
     check_in_range,
+    grow_dst!,
     DecodingError
 import ChunkCodecCore:
     decode_options,

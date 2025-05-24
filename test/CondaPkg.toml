@@ -1,2 +1,4 @@
-[pip.deps]
-imagecodecs = "==2025.3.30"
+[deps]
+hdf5plugin = ""
+h5py = ""
+imagecodecs = ""

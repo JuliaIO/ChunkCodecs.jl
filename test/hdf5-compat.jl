@@ -1,7 +1,12 @@
 include("hdf5_helpers.jl")
 
 using HDF5
-using ChunkCodecs
+using
+    ChunkCodecLibZstd,
+    ChunkCodecLibBlosc,
+    ChunkCodecLibBzip2,
+    ChunkCodecLibZlib,
+    ChunkCodecCore
 using ChunkCodecTests: rand_test_data
 using Test
 # Trigger HDF5 filter loading
@@ -9,6 +14,10 @@ import CodecBzip2
 import Blosc
 import CodecZstd
 import CodecLz4
+
+using PythonCall
+pyimport("hdf5plugin")
+h5py = pyimport("h5py")
 
 # Useful links:
 # https://support.hdfgroup.org/documentation/index.html
@@ -69,6 +78,10 @@ codecs = [
                 h5_decoded = collect(f["test-data"])
                 @test h5_decoded == data
             end
+            # Test reading with h5py
+            f = h5py.File(path, "r")
+            @test PyArray(f["test-data"][pybuiltins.Ellipsis]) == data
+            f.close()
         end
     end
 end

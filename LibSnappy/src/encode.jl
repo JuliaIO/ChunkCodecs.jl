@@ -4,9 +4,7 @@
 
 Snappy compression using the snappy C++ library: https://github.com/google/snappy
 
-There is currently a maximum decoded size of about 1.8 GB.
-
-This may change if https://github.com/google/snappy/issues/201 is resolved.
+The maximum decoded size is about 4 GB.
 
 # Keyword Arguments
 
@@ -24,10 +22,8 @@ function SnappyEncodeOptions(;
     )
 end
 
-# This prevents the encoded size from being larger than typemax(Int32)
-# This is needed to prevent overflows in the C++ code.
-# TODO adjust based on what happens with https://github.com/google/snappy/issues/201
-decoded_size_range(::SnappyEncodeOptions) = Int64(0):Int64(1):Int64(1840700242)
+# This is a limit of the format
+decoded_size_range(::SnappyEncodeOptions) = Int64(0):Int64(1):Int64(typemax(UInt32))
 
 function encode_bound(e::SnappyEncodeOptions, src_size::Int64)::Int64
     if src_size > last(decoded_size_range(e))

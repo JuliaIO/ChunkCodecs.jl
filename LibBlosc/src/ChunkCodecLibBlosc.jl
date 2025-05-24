@@ -22,7 +22,9 @@ export BloscCodec,
     BloscDecodeOptions,
     BloscDecodingError
 
-public is_compressor_valid, compcode, compname
+if VERSION >= v"1.11.0-DEV.469"
+    eval(Meta.parse("public is_compressor_valid, compcode, compname"))
+end
 
 # reexport ChunkCodecCore
 using ChunkCodecCore: ChunkCodecCore, encode, decode

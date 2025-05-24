@@ -97,3 +97,19 @@ end
         "ZstdDecodingError: ",
     )
 end
+@testset "public" begin
+    if VERSION >= v"1.11.0-DEV.469"
+        for sym in (
+            :ZSTD_minCLevel,
+            :ZSTD_maxCLevel,
+            :ZSTD_defaultCLevel,
+            :ZSTD_versionNumber,
+            :ZSTD_isError,
+            :ZSTD_bounds,
+            :ZSTD_cParam_getBounds,
+            :ZSTD_dParam_getBounds
+        )
+            @test Base.ispublic(ChunkCodecLibZstd, sym)
+        end
+    end
+end

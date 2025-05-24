@@ -1,10 +1,19 @@
 using PythonCall
-using ChunkCodecs
+using
+    ChunkCodecLibBlosc,
+    ChunkCodecLibBrotli,
+    ChunkCodecLibBzip2,
+    ChunkCodecLibLz4,
+    ChunkCodecLibSnappy,
+    ChunkCodecLibZlib,
+    ChunkCodecLibZstd,
+    ChunkCodecCore
 using ChunkCodecTests: rand_test_data
 using Test
 
 codecs = [
     (ChunkCodecLibBlosc.BloscEncodeOptions(),   ("blosc",   (;)), 1000),
+    (ChunkCodecLibBrotli.BrotliEncodeOptions(;quality=9),   ("brotli",   (;)), 50),
     (ChunkCodecLibBzip2.BZ2EncodeOptions(),     ("bz2",     (;)), 50),
     (ChunkCodecLibLz4.LZ4BlockEncodeOptions(),  ("lz4",     (;header=false)), 1000),
     (ChunkCodecLibLz4.LZ4HDF5EncodeOptions(),   ("lz4h5",     (;)), 1000),

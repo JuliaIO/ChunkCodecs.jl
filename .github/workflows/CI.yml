@@ -28,8 +28,6 @@ jobs:
       id: filter
       with:
         filters: |
-          ChunkCodecs:
-            - ./**
           ChunkCodecCore:
             - .github/**
             - ChunkCodecCore/**
@@ -39,6 +37,11 @@ jobs:
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibBlosc/**
+          LibBrotli:
+            - .github/**
+            - ChunkCodecCore/**
+            - ChunkCodecTests/**
+            - LibBrotli/**
           LibBzip2:
             - .github/**
             - ChunkCodecCore/**
@@ -75,7 +78,9 @@ jobs:
         # e.g. ['package1', 'package2'] if both package folders contains changes
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
         version:
+          - '1.10'
           - '1'
+          - 'pre'
         os:
           - ubuntu-latest
           - windows-latest
@@ -85,7 +90,18 @@ jobs:
           - 'x86'
         exclude:
           - os: macos-latest
-            arch: x86
+            arch: 'x86'
+          - os: macos-latest
+            version: '1.10'
+          - os: macos-latest
+            version: 'pre'
+          - os: windows-latest
+            version: '1.10'
+          - os: windows-latest
+            version: 'pre'
+          - os: ubuntu-latest
+            version: '1.10'
+            arch: 'x86'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -93,10 +109,24 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
           show-versioninfo: true
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-runtest@v1
-        with:
           project: ${{matrix.package}}
+      - uses: julia-actions/cache@v2
+      - name: Run the tests
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          using TOML
+          Pkg.Registry.update()
+          Pkg.activate(;temp=true)
+          # force it to use this PR's version of the package
+          ENV["JULIA_PKG_DEVDIR"]= mktempdir()
+          Pkg.develop(unique([
+            (;path="${{ matrix.package }}"),
+            (;path="ChunkCodecCore"),
+            (;path="ChunkCodecTests"),
+          ]))
+          Pkg.update()
+          Pkg.test(TOML.parsefile("${{ matrix.package }}/Project.toml")["name"]; coverage=true, allow_reresolve=false)
       - uses: julia-actions/julia-processcoverage@v1
         with:
           directories: ${{matrix.package}}/src

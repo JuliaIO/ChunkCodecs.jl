@@ -5,8 +5,3 @@ ChunkCodecLibSnappy = "eac87354-86d5-4a5b-ab5f-a6ee56b239b3"
 ChunkCodecTests = "06b1ce50-b741-4199-b118-ba5fe1a70fa7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[sources]
-ChunkCodecLibSnappy = {path = ".."}
-ChunkCodecCore = {path = "../../ChunkCodecCore"}
-ChunkCodecTests = {path = "../../ChunkCodecTests"}
