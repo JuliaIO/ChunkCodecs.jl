@@ -1,5 +1,5 @@
 [pip.deps]
 imagecodecs = "==2025.3.30"
+hdf5plugin = "==5.1.0"
+h5py = "==3.13.0"
 [deps]
-hdf5plugin = ""
-h5py = ""
