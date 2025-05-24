@@ -1,7 +1,7 @@
 name = "ChunkCodecLibSnappy"
 uuid = "eac87354-86d5-4a5b-ab5f-a6ee56b239b3"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.1.2"
+version = "0.2.0"
 
 [deps]
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
