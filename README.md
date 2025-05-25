@@ -17,6 +17,7 @@ A consistent Julia interface for lossless encoding and decoding of bytes in memo
 | Shuffle |  | ChunkCodecCore | ✅ | ✅ |
 | Noop |  | ChunkCodecCore | ✅ | ✅ |
 | LZ4Numcodecs |  | ChunkCodecLibLz4 | ✅ | ✅ |
+| LZ4HDF5 |  | ChunkCodecLibLz4 | ✅ | ✅ |
 | LZ4Frame | .lz4 | ChunkCodecLibLz4 | ✅ | ✅ |
 | LZ4Block |  | ChunkCodecLibLz4 | ✅ | ✅ |
 | Gzip | .gz RFC1952 | ChunkCodecLibZlib | ✅ | ✅ |

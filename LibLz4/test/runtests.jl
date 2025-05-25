@@ -15,6 +15,9 @@ end
 @testset "numcodecs" begin
     include("numcodecs.jl")
 end
+@testset "hdf5" begin
+    include("hdf5.jl")
+end
 @testset "errors" begin
     @test sprint(Base.showerror, LZ4DecodingError("test message")) ==
         "LZ4DecodingError: test message"
