@@ -17,7 +17,7 @@ import CodecZstd
 import CodecLz4
 
 using PythonCall
-pyimport("hdf5plugin")
+hdf5plugin = pyimport("hdf5plugin")
 h5py = pyimport("h5py")
 
 # Useful links:
@@ -59,6 +59,30 @@ codecs = [
     ) for element_size in [1:20; 1023; typemax(UInt32);]];
 ]
 
+function decode_h5_chunk(chunk::AbstractVector{UInt8}, id::Integer, client_data)
+    if id == 1
+        decode(ChunkCodecLibZlib.ZlibCodec(), chunk)
+    elseif id == 2
+        decode(ChunkCodecCore.ShuffleCodec(client_data[1]), chunk)
+    elseif id == 307
+        decode(ChunkCodecLibBzip2.BZ2Codec(), chunk)
+    elseif id == 32015
+        decode(ChunkCodecLibZstd.ZstdCodec(), chunk)
+    elseif id == 32001
+        decode(ChunkCodecLibBlosc.BloscCodec(), chunk)
+    else
+        error("Unsupported filter id: $(id)")
+    end
+end
+
+test_h5py_options = [
+    ((;compression=hdf5plugin.Zstd(clevel=3)), 100),
+    ((;compression=hdf5plugin.Blosc(cname="zstd", clevel=3), shuffle=true), 100),
+    ((;compression=hdf5plugin.BZip2(blocksize=5)), 10),
+    ((;compression="gzip", compression_opts=3), 100),
+    ((;compression="gzip", shuffle=true), 100),
+]
+
 @testset "$(jl_options) $(h5_options)" for (jl_options, h5_options, trials) in codecs
     h5file = tempname()
     srange = ChunkCodecCore.decoded_size_range(jl_options)
@@ -84,5 +108,67 @@ codecs = [
             @test PyArray(f["test-data"][pybuiltins.Ellipsis]) == data
             f.close()
         end
+    end
+end
+
+function make_h5py_file(options)
+    f = h5py.File.in_memory()
+    f.create_dataset("a"; options...)
+    f.flush()
+    hdf_data = collect(PyArray(f.id.get_file_image()))
+    f.close()
+    return hdf_data
+end
+
+function decode_h5_data(hdf_data)
+    h5open(hdf_data, "r"; name = "in_memory.h5") do f
+        ds = f["a"]
+        filters = HDF5.get_create_properties(ds).filters
+        chunk_size = HDF5.get_chunk(ds)
+        data_size = size(ds)
+        out = zeros(eltype(ds), data_size)
+        for chunkinfo in HDF5.get_chunk_info_all(ds)
+            start = chunkinfo.addr + firstindex(hdf_data)
+            stop = start + chunkinfo.size - 1
+            chunk = hdf_data[start:stop]
+            for i in length(filters):-1:1
+                if chunkinfo.filter_mask & (1 << (i - 1)) != 0
+                    continue
+                end
+                filter = filters[HDF5.Filters.ExternalFilter, i]
+                chunk = decode_h5_chunk(chunk, filter.filter_id, filter.data)
+            end
+            chunkstart = chunkinfo.offset .+ 1
+            chunkstop = min.(chunkstart .+ chunk_size .- 1, data_size)
+            real_chunksize = chunkstop .- chunkstart .+ 1
+            shaped_chunkdata = reshape(reinterpret(eltype(out), chunk), chunk_size...)
+            copyto!(
+                out,
+                CartesianIndices(((range.(chunkstart, chunkstop))...,)),
+                shaped_chunkdata,
+                CartesianIndices(((range.(1, real_chunksize))...,))
+            )
+        end
+        out
+    end
+end
+
+@testset "HDF5 compatibility with h5py $(options)" for (options, trials) in test_h5py_options
+    decoded_sizes = [
+        1:10;
+        rand((1:2000000), trials);
+    ]
+    for s in decoded_sizes
+        choice = rand(1:3)
+        data = if choice == 1
+            rand_test_data(s)
+        elseif choice == 2
+            randn(s)
+        elseif choice == 3
+            randn(2, s)
+        end
+        hdf_data = make_h5py_file((;data, options...))
+        decoded_data = decode_h5_data(hdf_data)
+        @test decoded_data == permutedims(data, ((ndims(data):-1:1)...,))
     end
 end
