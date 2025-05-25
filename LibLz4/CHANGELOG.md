@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v0.2.1](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibLz4-v0.2.1) - 2025-05-25
+
+- Added support for LZ4 HDF5 [#27](https://github.com/JuliaIO/ChunkCodecs.jl/pull/27)
+
 ## [v0.2.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibLz4-v0.2.0) - 2025-05-23
 
 - Update to `ChunkCodecCore` 0.5 [#45](https://github.com/JuliaIO/ChunkCodecs.jl/pull/45)
