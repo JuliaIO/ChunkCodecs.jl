@@ -66,21 +66,25 @@ function decode_h5_chunk(chunk::AbstractVector{UInt8}, id::Integer, client_data)
         decode(ChunkCodecCore.ShuffleCodec(client_data[1]), chunk)
     elseif id == 307
         decode(ChunkCodecLibBzip2.BZ2Codec(), chunk)
-    elseif id == 32015
-        decode(ChunkCodecLibZstd.ZstdCodec(), chunk)
     elseif id == 32001
         decode(ChunkCodecLibBlosc.BloscCodec(), chunk)
+    elseif id == 32004
+        decode(ChunkCodecLibLz4.LZ4HDF5Codec(), chunk)
+    elseif id == 32015
+        decode(ChunkCodecLibZstd.ZstdCodec(), chunk)
     else
         error("Unsupported filter id: $(id)")
     end
 end
 
 test_h5py_options = [
-    ((;compression=hdf5plugin.Zstd(clevel=3)), 100),
-    ((;compression=hdf5plugin.Blosc(cname="zstd", clevel=3), shuffle=true), 100),
-    ((;compression=hdf5plugin.BZip2(blocksize=5)), 10),
-    ((;compression="gzip", compression_opts=3), 100),
-    ((;compression="gzip", shuffle=true), 100),
+    ((;compression=hdf5plugin.LZ4()), 100);
+    ((;compression=hdf5plugin.LZ4(nbytes=500)), 100);
+    ((;compression=hdf5plugin.Zstd(clevel=3)), 100);
+    ((;compression=hdf5plugin.Blosc(cname="zstd", clevel=3), shuffle=true), 100);
+    ((;compression=hdf5plugin.BZip2(blocksize=5)), 10);
+    ((;compression="gzip", compression_opts=3), 100);
+    ((;compression="gzip", shuffle=true), 100);
 ]
 
 @testset "$(jl_options) $(h5_options)" for (jl_options, h5_options, trials) in codecs
