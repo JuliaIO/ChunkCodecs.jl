@@ -28,7 +28,6 @@ function encode_bound(x::SzipHDF5Codec, src_size::Int64)::Int64
     elseif src_size > typemax(UInt32)
         return typemax(Int64)
     end
-    #TODO validate parameters to prevent weird errors
     blocks_per_scanline = Int64(cld(x.pixels_per_scanline, x.pixels_per_block))
     bits_per_pixel = if x.bits_per_pixel == 32 || x.bits_per_pixel == 64
         Int32(8)
@@ -110,7 +109,6 @@ function SzipHDF5EncodeOptions(;
         codec::SzipHDF5Codec,
         kwargs...
     )
-    #TODO should this validate codec parameters, to prevent try_encode! UB?
     SzipHDF5EncodeOptions(
         codec,
     )

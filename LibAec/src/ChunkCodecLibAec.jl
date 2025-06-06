@@ -43,7 +43,7 @@ The maximum decoded size is about 4 GB.
 
 """
     struct SzipHDF5Codec <: Codec
-    SzipHDF5Codec(options_mask::Integer, bits_per_pixel::Integer, pixels_per_block::Integer, pixels_per_scanline::Integer)
+    SzipHDF5Codec(;options_mask::Integer, bits_per_pixel::Integer, pixels_per_block::Integer, pixels_per_scanline::Integer)
 
 $(sziphdf5_docs)
 
@@ -105,6 +105,25 @@ struct SzipHDF5Codec <: Codec
     pixels_per_block::Int32
     pixels_per_scanline::Int32
 end
+function SzipHDF5Codec(;
+        options_mask::Integer,
+        bits_per_pixel::Integer,
+        pixels_per_block::Integer,
+        pixels_per_scanline::Integer,
+    )
+    if bits_per_pixel ∉ 1:32 && bits_per_pixel != 64
+        throw(ArgumentError("bits_per_pixel ∈ [1:32; 64;] must hold. Got\nbits_per_pixel => $(bits_per_pixel)"))
+    end
+    check_in_range(2:2:SZ_MAX_PIXELS_PER_BLOCK; pixels_per_block)
+    check_in_range(1:SZ_MAX_BLOCKS_PER_SCANLINE*pixels_per_block; pixels_per_scanline)
+    SzipHDF5Codec(
+        options_mask,
+        bits_per_pixel,
+        pixels_per_block,
+        pixels_per_scanline
+    )
+end
+
 decode_options(x::SzipHDF5Codec) = SzipHDF5DecodeOptions(;codec=x)
 
 include("encode.jl")

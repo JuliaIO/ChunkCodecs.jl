@@ -25,6 +25,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [sources]
 ChunkCodecCore = {path = "../ChunkCodecCore"}
+ChunkCodecLibAec = {path = "../LibAec"}
 ChunkCodecLibBlosc = {path = "../LibBlosc"}
 ChunkCodecLibBrotli = {path = "../LibBrotli"}
 ChunkCodecLibBzip2 = {path = "../LibBzip2"}
