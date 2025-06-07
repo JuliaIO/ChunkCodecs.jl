@@ -1,4 +1,4 @@
-# ChunkCodecLibBrotli
+# ChunkCodecLibAec
 
 ## Warning: ChunkCodecLibAec is currently a WIP and its API may drastically change at any time.
 
