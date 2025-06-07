@@ -1,4 +1,123 @@
 # Helper functions for testing with HDF5
+using HDF5
+using
+    ChunkCodecLibZstd,
+    ChunkCodecLibBlosc,
+    ChunkCodecLibBzip2,
+    ChunkCodecLibLz4,
+    ChunkCodecLibZlib,
+    ChunkCodecLibAec,
+    ChunkCodecCore
+using ChunkCodecTests: rand_test_data
+using Test
+# Trigger HDF5 filter loading
+import CodecBzip2
+import Blosc
+import CodecZstd
+import CodecLz4
+
+using PythonCall
+hdf5plugin = pyimport("hdf5plugin")
+h5py = pyimport("h5py")
+
+function do_hdf5_test(
+        jl_options::ChunkCodecCore.EncodeOptions,
+        filter_ids::Vector{UInt16},
+        client_datas::Vector{Vector{UInt32}},
+        trials::Int,
+    )
+    @testset "$jl_options" begin
+        srange = ChunkCodecCore.decoded_size_range(jl_options)
+        # round trip tests
+        decoded_sizes = [
+            first(srange):step(srange):min(last(srange), first(srange)+10*step(srange));
+            rand(first(srange):step(srange):min(last(srange), 2000000), trials);
+        ]
+        for s in decoded_sizes
+            # HDF5 cannot handle zero sized chunks
+            iszero(s) && continue
+            data = rand_test_data(s)
+            chunk = encode(jl_options, data)
+            hdf_data = make_hdf5(chunk, s, filter_ids, client_datas)
+            h5open(hdf_data, "r", name = "in_memory.h5") do f
+                h5_decoded = collect(f["test-data"])
+                @test h5_decoded == data
+            end
+            # Test reading with h5py
+            f = h5py.File.in_memory(hdf_data)
+            @test PyArray(f["test-data"][pybuiltins.Ellipsis]) == data
+            f.close()
+        end
+    end
+end
+
+function do_h5py_test(options, trials)
+    @testset "decoding h5py $(options().compression)" begin
+        for trial in 1:trials
+            _options = options()
+            data = _options.data
+            hdf_data = make_h5py_file(_options)
+            decoded_data = decode_h5_data(hdf_data)
+            @test decoded_data == permutedims(data, ((ndims(data):-1:1)...,))
+        end
+    end
+end
+
+function make_h5py_file(options)
+    f = h5py.File.in_memory()
+    f.create_dataset("a"; options...)
+    f.flush()
+    hdf_data = collect(PyArray(f.id.get_file_image()))
+    f.close()
+    return hdf_data
+end
+
+function decode_h5_data(hdf_data)
+    h5open(hdf_data, "r"; name = "in_memory.h5") do f
+        ds = f["a"]
+        filters = HDF5.get_create_properties(ds).filters
+        chunk_size = HDF5.get_chunk(ds)
+        data_size = size(ds)
+        out = zeros(eltype(ds), data_size)
+        for chunkinfo in HDF5.get_chunk_info_all(ds)
+            start = chunkinfo.addr + firstindex(hdf_data)
+            stop = start + chunkinfo.size - 1
+            chunk = hdf_data[start:stop]
+            for i in length(filters):-1:1
+                if chunkinfo.filter_mask & (1 << (i - 1)) != 0
+                    continue
+                end
+                filter = filters[HDF5.Filters.ExternalFilter, i]
+                chunk = decode_h5_chunk(chunk, filter.filter_id, filter.data)
+            end
+            chunkstart = chunkinfo.offset .+ 1
+            chunkstop = min.(chunkstart .+ chunk_size .- 1, data_size)
+            real_chunksize = chunkstop .- chunkstart .+ 1
+            shaped_chunkdata = reshape(reinterpret(eltype(out), chunk), chunk_size...)
+            copyto!(
+                out,
+                CartesianIndices(((range.(chunkstart, chunkstop))...,)),
+                shaped_chunkdata,
+                CartesianIndices(((range.(1, real_chunksize))...,))
+            )
+        end
+        out
+    end
+end
+
+function rand_array()
+    choice = rand(1:8)
+    if choice ∈ 1:5
+        rand_test_data(rand(1:2000000))
+    elseif choice == 6
+        randn(rand(1:2000000))
+    elseif choice == 7
+        randn(2, rand(1:2000000))
+    elseif choice == 8
+        rand_test_data(rand(1:10))
+    end
+end
+
 
 # Ported to Julia from original source at http://www.burtleburtle.net/bob/c/lookup3.c
 # lookup3.c, by Bob Jenkins, May 2006, Public Domain.

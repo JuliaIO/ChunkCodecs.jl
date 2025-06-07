@@ -1,11 +1,11 @@
 # Constants and c wrapper functions ported to Julia from szlib.h https://github.com/MathisRosenhauer/libaec/blob/v1.1.3/include/szlib.h
-const SZ_ALLOW_K13_OPTION_MASK = 1
-const SZ_CHIP_OPTION_MASK = 2
-const SZ_EC_OPTION_MASK = 4
-const SZ_LSB_OPTION_MASK = 8
-const SZ_MSB_OPTION_MASK = 16
-const SZ_NN_OPTION_MASK = 32
-const SZ_RAW_OPTION_MASK = 128
+const SZ_ALLOW_K13_OPTION_MASK = Int32(1)
+const SZ_CHIP_OPTION_MASK = Int32(2)
+const SZ_EC_OPTION_MASK = Int32(4)
+const SZ_LSB_OPTION_MASK = Int32(8)
+const SZ_MSB_OPTION_MASK = Int32(16)
+const SZ_NN_OPTION_MASK = Int32(32)
+const SZ_RAW_OPTION_MASK = Int32(128)
 
 const SZ_OK = AEC_OK
 const SZ_OUTBUFF_FULL = Cint(2)
