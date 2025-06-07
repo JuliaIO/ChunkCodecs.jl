@@ -14,7 +14,7 @@ julia> using ChunkCodecLibAec
 
 julia> data = [0x00, 0x01, 0x02, 0x03];
 
-julia> codec = SzipHDF5Codec(;options_mask=0, bits_per_pixel=32, pixels_per_block=8, pixels_per_scanline=8)
+julia> codec = SzipHDF5Codec(;options_mask=Int32(0), bits_per_pixel=32, pixels_per_block=8, pixels_per_scanline=8)
 
 julia> compressed_data = encode(codec, data);
 

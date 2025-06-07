@@ -23,7 +23,7 @@ export SzipHDF5Codec,
     SzipDecodingError
 
 if VERSION >= v"1.11.0-DEV.469"
-    eval(Meta.parse("public SZ_MSB_OPTION_MASK, SZ_NN_OPTION_MASK"))
+    eval(Meta.parse("public SZ_LSB_OPTION_MASK, SZ_MSB_OPTION_MASK, SZ_EC_OPTION_MASK, SZ_NN_OPTION_MASK"))
 end
 
 # reexport ChunkCodecCore
@@ -43,7 +43,7 @@ The maximum decoded size is about 4 GB.
 
 """
     struct SzipHDF5Codec <: Codec
-    SzipHDF5Codec(;options_mask::Integer, bits_per_pixel::Integer, pixels_per_block::Integer, pixels_per_scanline::Integer)
+    SzipHDF5Codec(;options_mask::Int32, bits_per_pixel::Integer, pixels_per_block::Integer, pixels_per_scanline::Integer)
 
 $(sziphdf5_docs)
 
@@ -54,12 +54,17 @@ A `SzipHDF5Codec` can be used as an encoder or decoder.
 # Fields
 
 ## `options_mask::Int32`: A bitwise or of the following constants.
-
 - `SZ_MSB_OPTION_MASK`:
     input data is stored most significant byte first
     i.e. big endian.
+    Little endian is default and `SZ_LSB_OPTION_MASK` is ignored by libaec,
+    but HDF5 tries to ensure exactly one of `SZ_MSB_OPTION_MASK` and `SZ_LSB_OPTION_MASK`
+    is specified.
 - `SZ_NN_OPTION_MASK`:
-    Set if preprocessor should be used.
+    Set if preprocessor is used.
+    No preprocessor is default and `SZ_EC_OPTION_MASK` is ignored by libaec,
+    but HDF5 tries to ensure exactly one of `SZ_NN_OPTION_MASK` and `SZ_EC_OPTION_MASK`
+    is specified.
 
 ## `bits_per_pixel::Int32`
 
@@ -106,7 +111,7 @@ struct SzipHDF5Codec <: Codec
     pixels_per_scanline::Int32
 end
 function SzipHDF5Codec(;
-        options_mask::Integer,
+        options_mask::Int32,
         bits_per_pixel::Integer,
         pixels_per_block::Integer,
         pixels_per_scanline::Integer,

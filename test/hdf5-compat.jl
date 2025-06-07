@@ -20,7 +20,27 @@ include("hdf5_helpers.jl")
 ) for element_size in [1:20; 1023; typemax(UInt32);]]
 do_hdf5_test(
     ChunkCodecLibAec.SzipHDF5EncodeOptions(;codec=ChunkCodecLibAec.SzipHDF5Codec(;
-        options_mask=0,
+        options_mask=ChunkCodecLibAec.SZ_LSB_OPTION_MASK,
+        pixels_per_block=16,
+        bits_per_pixel=32,
+        pixels_per_scanline=17,
+    )),
+    [0x0004], [[UInt32(0), UInt32(16), UInt32(32), UInt32(17)]],
+    200,
+)
+do_hdf5_test(
+    ChunkCodecLibAec.SzipHDF5EncodeOptions(;codec=ChunkCodecLibAec.SzipHDF5Codec(;
+        options_mask=ChunkCodecLibAec.SZ_MSB_OPTION_MASK | ChunkCodecLibAec.SZ_NN_OPTION_MASK,
+        pixels_per_block=16,
+        bits_per_pixel=32,
+        pixels_per_scanline=17,
+    )),
+    [0x0004], [[UInt32(0), UInt32(16), UInt32(32), UInt32(17)]],
+    200,
+)
+do_hdf5_test(
+    ChunkCodecLibAec.SzipHDF5EncodeOptions(;codec=ChunkCodecLibAec.SzipHDF5Codec(;
+        options_mask=ChunkCodecLibAec.SZ_LSB_OPTION_MASK | ChunkCodecLibAec.SZ_EC_OPTION_MASK,
         pixels_per_block=16,
         bits_per_pixel=32,
         pixels_per_scanline=17,

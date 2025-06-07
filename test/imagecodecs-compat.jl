@@ -15,7 +15,7 @@ using Test
 codecs = [
     (
         ChunkCodecLibAec.SzipHDF5EncodeOptions(;codec=ChunkCodecLibAec.SzipHDF5Codec(;
-            options_mask=0,
+            options_mask=Int32(0),
             pixels_per_block=16,
             bits_per_pixel=16,
             pixels_per_scanline=16,
