@@ -32,6 +32,11 @@ jobs:
             - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
+          LibAec:
+            - .github/**
+            - ChunkCodecCore/**
+            - ChunkCodecTests/**
+            - LibAec/**
           LibBlosc:
             - .github/**
             - ChunkCodecCore/**
