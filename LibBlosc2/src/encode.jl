@@ -27,6 +27,7 @@ struct Blosc2EncodeOptions <: EncodeOptions
     clevel::Int32
     doshuffle::Int32
     typesize::Int64
+    chunksize::Int64
     compressor::String
 end
 function Blosc2EncodeOptions(;
@@ -34,6 +35,7 @@ function Blosc2EncodeOptions(;
                              clevel::Integer=5,
                              doshuffle::Integer=1,
                              typesize::Integer=1,
+                             chunksize::Integer=Int64(1024)^3, # 1 GByte
                              compressor::AbstractString="lz4",
                              kwargs...)
     _clevel = Int32(clamp(clevel, 0, 9))
@@ -43,13 +45,11 @@ function Blosc2EncodeOptions(;
     else
         Int64(1)
     end
+    _chunksize = Int64(clamp(chunksize, 1024, Int64(1024)^3)) # 1 GByte
     is_compressor_valid(compressor) ||
         throw(ArgumentError("is_compressor_valid(compressor) must hold. Got\ncompressor => $(repr(compressor))"))
-    return Blosc2EncodeOptions(codec, _clevel, doshuffle, _typesize, compressor)
+    return Blosc2EncodeOptions(codec, _clevel, doshuffle, _typesize, _chunksize, compressor)
 end
-
-# The maximum chunk size we're using: 1 GByte (must be less than 2 GByte including overhead)
-const MAX_CHUNK_SIZE = Int64(1024)^3
 
 # The maximum overhead for the schunk
 const MAX_SCHUNK_OVERHEAD = 172 # apparently undocumented -- just a guess
@@ -57,8 +57,8 @@ const MAX_SCHUNK_OVERHEAD = 172 # apparently undocumented -- just a guess
 # We just punt with the upper bound. typemax(Int64) is a huge number anyway.
 decoded_size_range(e::Blosc2EncodeOptions) = Int64(0):Int64(e.typesize):(typemax(Int64) ÷ 2)
 
-function encode_bound(::Blosc2EncodeOptions, src_size::Int64)::Int64
-    return clamp(widen(src_size) + cld(src_size, MAX_CHUNK_SIZE) * BLOSC2_MAX_OVERHEAD + MAX_SCHUNK_OVERHEAD, Int64)
+function encode_bound(e::Blosc2EncodeOptions, src_size::Int64)::Int64
+    return clamp(widen(src_size) + cld(src_size, e.chunksize) * BLOSC2_MAX_OVERHEAD + MAX_SCHUNK_OVERHEAD, Int64)
 end
 
 function try_encode!(e::Blosc2EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8};
@@ -102,14 +102,14 @@ function try_encode!(e::Blosc2EncodeOptions, dst::AbstractVector{UInt8}, src::Ab
         @assert schunk != Ptr{Blosc2Storage}()
 
         # Break input into chunks
-        for pos in 1:MAX_CHUNK_SIZE:src_size
-            endpos = min(src_size, pos + MAX_CHUNK_SIZE - 1)
+        for pos in 1:e.chunksize:src_size
+            endpos = min(src_size, pos + e.chunksize - 1)
             srcview = @view src[pos:endpos]
             nbytes = length(srcview)
             nchunks = @ccall libblosc2.blosc2_schunk_append_buffer(schunk::Ptr{Blosc2SChunk}, srcview::Ptr{Cvoid},
                                                                    nbytes::Int32)::Int64
             @assert nchunks >= 0
-            @assert nchunks == (pos-1) ÷ MAX_CHUNK_SIZE + 1
+            @assert nchunks == (pos-1) ÷ e.chunksize + 1
         end
 
         cframe = Ref{Ptr{UInt8}}()

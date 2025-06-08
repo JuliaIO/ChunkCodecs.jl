@@ -105,7 +105,8 @@ function try_decode!(d::Blosc2DecodeOptions, dst::AbstractVector{UInt8}, src::Ab
         end
 
         # TODO: Use this instead of checking each chunk
-        @assert unsafe_load(schunk).nbytes == nbytes
+        # overall uncompressed size: unsafe_load(schunk).nbytes
+        # this chunk uncompressed size: nbytes
 
         if total_nbytes + nbytes > length(dst)
             there_was_an_error = true

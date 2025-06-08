@@ -14,52 +14,61 @@ Aqua.test_all(ChunkCodecLibBlosc2; persistent_tasks=false)
 
 Random.seed!(1234)
 
-#TODO @testset "default" begin
-#TODO     test_codec(Blosc2Codec(), Blosc2EncodeOptions(), Blosc2DecodeOptions(); trials=100)
-#TODO end
-#TODO @testset "typesize" begin
-#TODO     for i in 1:50
-#TODO         test_codec(Blosc2Codec(), Blosc2EncodeOptions(; typesize=i), Blosc2DecodeOptions(); trials=10)
-#TODO     end
-#TODO end
-#TODO @testset "compressors" begin
-#TODO     for clevel in 0:9
-#TODO         for compressor in ["blosclz", "lz4", "lz4hc", "zlib", "zstd"]
-#TODO             test_codec(Blosc2Codec(), Blosc2EncodeOptions(; compressor, clevel), Blosc2DecodeOptions(); trials=10)
-#TODO         end
-#TODO     end
-#TODO end
-#TODO @testset "invalid options" begin
-#TODO     @test Blosc2EncodeOptions(; clevel=-1).clevel == 0
-#TODO     @test Blosc2EncodeOptions(; clevel=100).clevel == 9
-#TODO     # typesize can be anything, but out of the range it gets set to 1
-#TODO     e = Blosc2EncodeOptions(; typesize=typemax(UInt128))
-#TODO     @test e.typesize == 1
-#TODO     e = Blosc2EncodeOptions(; typesize=0)
-#TODO     @test e.typesize == 1
-#TODO     e = Blosc2EncodeOptions(; typesize=-1)
-#TODO     @test e.typesize == 1
-#TODO     e = Blosc2EncodeOptions(; typesize=ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE)
-#TODO     @test e.typesize == ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE
-#TODO     e = Blosc2EncodeOptions(; typesize=(ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE+1))
-#TODO     @test e.typesize == 1
-#TODO     @test_throws ArgumentError Blosc2EncodeOptions(; compressor="")
-#TODO     @test_throws ArgumentError Blosc2EncodeOptions(; compressor="asfdgfsdgrwwea")
-#TODO     @test_throws ArgumentError Blosc2EncodeOptions(; compressor="blosclz,")
-#TODO     @test_throws ArgumentError Blosc2EncodeOptions(; compressor="blosclz\0")
-#TODO end
-#TODO @testset "compcode and compname" begin
-#TODO     @test ChunkCodecLibBlosc2.compcode("blosclz") == 0
-#TODO     @test ChunkCodecLibBlosc2.is_compressor_valid("blosclz")
-#TODO     @test ChunkCodecLibBlosc2.compname(0) == "blosclz"
-#TODO 
-#TODO     @test_throws ArgumentError ChunkCodecLibBlosc2.compcode("sdaffads")
-#TODO     @test !ChunkCodecLibBlosc2.is_compressor_valid("sdaffads")
-#TODO     @test_throws ArgumentError ChunkCodecLibBlosc2.compcode("sdaffads")
-#TODO     @test_throws ArgumentError ChunkCodecLibBlosc2.compname(100)
-#TODO 
-#TODO     @test !ChunkCodecLibBlosc2.is_compressor_valid("\0")
-#TODO end
+@testset "default" begin
+    test_codec(Blosc2Codec(), Blosc2EncodeOptions(), Blosc2DecodeOptions(); trials=100)
+end
+@testset "typesize" begin
+    for i in 1:50
+        test_codec(Blosc2Codec(), Blosc2EncodeOptions(; typesize=i), Blosc2DecodeOptions(); trials=10)
+    end
+end
+@testset "compressors" begin
+    for clevel in 0:9
+        for compressor in ["blosclz", "lz4", "lz4hc", "zlib", "zstd"]
+            test_codec(Blosc2Codec(), Blosc2EncodeOptions(; compressor, clevel), Blosc2DecodeOptions(); trials=10)
+        end
+    end
+end
+@testset "large inputs" begin
+    # We cannot really test large inputs (multi-Gigabyte) in a regular test.
+    # We therefore simulate this with smaller inputs and a ridiculously small chunk size.
+    u = reinterpret(UInt8, collect(float(1:10^6)))
+    e = Blosc2EncodeOptions(; clevel=9, doshuffle=2, typesize=sizeof(float(1)), chunksize=10^4, compressor="zstd")
+    c = encode(e, u)
+    u′ = decode(Blosc2DecodeOptions(), c)
+    @test u′ == u
+end
+@testset "invalid options" begin
+    @test Blosc2EncodeOptions(; clevel=-1).clevel == 0
+    @test Blosc2EncodeOptions(; clevel=100).clevel == 9
+    # typesize can be anything, but out of the range it gets set to 1
+    e = Blosc2EncodeOptions(; typesize=typemax(UInt128))
+    @test e.typesize == 1
+    e = Blosc2EncodeOptions(; typesize=0)
+    @test e.typesize == 1
+    e = Blosc2EncodeOptions(; typesize=-1)
+    @test e.typesize == 1
+    e = Blosc2EncodeOptions(; typesize=ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE)
+    @test e.typesize == ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE
+    e = Blosc2EncodeOptions(; typesize=(ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE+1))
+    @test e.typesize == 1
+    @test_throws ArgumentError Blosc2EncodeOptions(; compressor="")
+    @test_throws ArgumentError Blosc2EncodeOptions(; compressor="asfdgfsdgrwwea")
+    @test_throws ArgumentError Blosc2EncodeOptions(; compressor="blosclz,")
+    @test_throws ArgumentError Blosc2EncodeOptions(; compressor="blosclz\0")
+end
+@testset "compcode and compname" begin
+    @test ChunkCodecLibBlosc2.compcode("blosclz") == 0
+    @test ChunkCodecLibBlosc2.is_compressor_valid("blosclz")
+    @test ChunkCodecLibBlosc2.compname(0) == "blosclz"
+
+    @test_throws ArgumentError ChunkCodecLibBlosc2.compcode("sdaffads")
+    @test !ChunkCodecLibBlosc2.is_compressor_valid("sdaffads")
+    @test_throws ArgumentError ChunkCodecLibBlosc2.compcode("sdaffads")
+    @test_throws ArgumentError ChunkCodecLibBlosc2.compname(100)
+
+    @test !ChunkCodecLibBlosc2.is_compressor_valid("\0")
+end
 @testset "errors" begin
     # check Blosc2DecodingError prints the correct error message
     @test sprint(Base.showerror, Blosc2DecodingError()) == "Blosc2DecodingError: blosc2 compressed buffer cannot be decoded"
