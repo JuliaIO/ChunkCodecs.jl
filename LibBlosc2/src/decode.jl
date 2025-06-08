@@ -37,33 +37,7 @@ function try_find_decoded_size(::Blosc2DecodeOptions, src::AbstractVector{UInt8}
     end
     @ccall libblosc2.blosc2_schunk_avoid_cframe_free(schunk::Ptr{Blosc2SChunk}, true::UInt8)::Cvoid
 
-    total_nbytes = Int64(0)
-
-    nchunks = unsafe_load(schunk).nchunks
-    for nchunk in 0:(nchunks - 1)
-        cbuffer = Ref{Ptr{UInt8}}()
-        needs_free = Ref{UInt8}()
-        chunksize = @ccall libblosc2.blosc2_schunk_get_chunk(schunk::Ptr{Blosc2SChunk}, nchunk::Int64, cbuffer::Ref{Ptr{UInt8}},
-                                                             needs_free::Ref{UInt8})::Cint
-        @assert chunksize > 0
-        cbuffer = cbuffer[]
-        needs_free = Bool(needs_free[])
-
-        nbytes = Ref{Int32}()
-        success = @ccall libblosc2.blosc1_cbuffer_validate(cbuffer::Ptr{Cvoid}, chunksize::Cint, nbytes::Ref{Cint})::Cint
-        @assert success == 0
-        nbytes = nbytes[]
-
-        total_nbytes += nbytes
-
-        if needs_free
-            # We could provide buffer into which to decode instead, reusing that buffer
-            Libc.free(cbuffer)
-        end
-    end
-
-    # TODO: Use this instead of the loop above
-    @assert unsafe_load(schunk).nbytes == total_nbytes
+    total_nbytes = unsafe_load(schunk).nbytes
 
     success = @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Cvoid})::Cint
     @assert success == 0
@@ -78,56 +52,38 @@ function try_decode!(d::Blosc2DecodeOptions, dst::AbstractVector{UInt8}, src::Ab
     check_contiguous(dst)
     check_contiguous(src)
 
-    schunk = @ccall libblosc2.blosc2_schunk_from_buffer(src::Ptr{UInt8}, length(src)::Int64, false::UInt8)::Ptr{Blosc2SChunk}
-    @assert schunk != Ptr{Blosc2Storage}()
+    copy_cframe = false
+    schunk = @ccall libblosc2.blosc2_schunk_from_buffer(src::Ptr{UInt8}, length(src)::Int64, copy_cframe::UInt8)::Ptr{Blosc2SChunk}
+    if schunk == Ptr{Blosc2Storage}()
+        # These are not a valid blosc2-encoded data
+        throw(Blosc2DecodingError())
+    end
     @ccall libblosc2.blosc2_schunk_avoid_cframe_free(schunk::Ptr{Blosc2SChunk}, true::UInt8)::Cvoid
 
-    there_was_an_error = false
-    total_nbytes = Int64(0)
+    total_nbytes = unsafe_load(schunk).nbytes
+    if total_nbytes > length(dst)
+        # There is not enough space to decode the data
+        success = @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Cvoid})::Cint
+        @assert success == 0
+
+        return nothing
+    end
+
+    dst_position = Int64(0)
 
     nchunks = unsafe_load(schunk).nchunks
     for nchunk in 0:(nchunks - 1)
-        cbuffer = Ref{Ptr{UInt8}}()
-        needs_free = Ref{UInt8}()
-        chunksize = @ccall libblosc2.blosc2_schunk_get_chunk(schunk::Ptr{Blosc2SChunk}, nchunk::Int64, cbuffer::Ref{Ptr{UInt8}},
-                                                             needs_free::Ref{UInt8})::Cint
-        @assert chunksize > 0
-        cbuffer = cbuffer[]
-        needs_free = Bool(needs_free[])
+        nbytes_left = clamp(total_nbytes - dst_position, Int32)
+        nbytes = @ccall libblosc2.blosc2_schunk_decompress_chunk(schunk::Ptr{Blosc2SChunk}, nchunk::Int64,
+                                                                 pointer(dst, dst_position+1)::Ptr{Cvoid}, nbytes_left::Int32)::Cint
+        @assert nbytes > 0
 
-        nbytes = Ref{Int32}()
-        success = @ccall libblosc2.blosc1_cbuffer_validate(cbuffer::Ptr{Cvoid}, chunksize::Cint, nbytes::Ref{Cint})::Cint
-        @assert success == 0
-        nbytes = nbytes[]
-
-        if needs_free
-            Libc.free(cbuffer)
-        end
-
-        # TODO: Use this instead of checking each chunk
-        # overall uncompressed size: unsafe_load(schunk).nbytes
-        # this chunk uncompressed size: nbytes
-
-        if total_nbytes + nbytes > length(dst)
-            there_was_an_error = true
-            break
-        end
-
-        @assert total_nbytes + nbytes <= length(dst)
-        nbytes′ = @ccall libblosc2.blosc2_schunk_decompress_chunk(schunk::Ptr{Blosc2SChunk}, nchunk::Int64,
-                                                                  pointer(dst, total_nbytes+1)::Ptr{Cvoid}, nbytes::Int32)::Cint
-        @assert nbytes′ >= 0
-        @assert nbytes′ == nbytes
-
-        total_nbytes += nbytes
+        dst_position += nbytes
     end
+    @assert dst_position == total_nbytes
 
     success = @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Cvoid})::Cint
     @assert success == 0
-
-    if there_was_an_error
-        return nothing
-    end
 
     return total_nbytes::Int64
 end

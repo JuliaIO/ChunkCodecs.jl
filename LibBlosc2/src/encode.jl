@@ -121,7 +121,8 @@ function try_encode!(e::Blosc2EncodeOptions, dst::AbstractVector{UInt8}, src::Ab
         needs_free = Bool(needs_free[])
 
         if compressed_size <= length(dst)
-            # TODO: Encode directly into `dst`
+            # We should try to encode directly into `dst`. (This may
+            # not be possible with the Blosc2 API.)
             unsafe_copyto!(pointer(dst), cframe, compressed_size)
         else
             # Insufficient space to stored compressed data.

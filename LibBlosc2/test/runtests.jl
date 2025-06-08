@@ -32,7 +32,7 @@ end
 @testset "large inputs" begin
     # We cannot really test large inputs (multi-Gigabyte) in a regular test.
     # We therefore simulate this with smaller inputs and a ridiculously small chunk size.
-    u = reinterpret(UInt8, collect(float(1:10^6)))
+    u = reinterpret(UInt8, collect(float(1:(10 ^ 6))))
     e = Blosc2EncodeOptions(; clevel=9, doshuffle=2, typesize=sizeof(float(1)), chunksize=10^4, compressor="zstd")
     c = encode(e, u)
     u′ = decode(Blosc2DecodeOptions(), c)
