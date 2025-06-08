@@ -1,0 +1,18 @@
+name = "ChunkCodecLibBlosc2"
+uuid = "59b5581c-e2bc-42b3-a6f1-80e88eec7b70"
+authors = ["Erik Schnetter <schnetter@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
+Blosc2_jll = "d43303dc-dd0e-56c6-b0a8-331f4c8c9bfb"
+ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
+
+[compat]
+Accessors = "0.1.42"
+Blosc2_jll = "201.1700.100"
+ChunkCodecCore = "0.5.0"
+julia = "1.10"
+
+[workspace]
+projects = ["test"]
