@@ -25,6 +25,7 @@ A consistent Julia interface for lossless encoding and decoding of bytes in memo
 | BZ2 | .bz2 bzip2 | ChunkCodecLibBzip2 | ✅ | ✅ |
 | Brotli | .br RFC7932 | ChunkCodecLibBrotli | ✅ | ✅ |
 | Blosc |  | ChunkCodecLibBlosc | ✅ | ✅ |
+| Blosc2 |  | ChunkCodecLibBlosc2 | ✅ | ✅ |
 
 ## Simple encoding and decoding
 
