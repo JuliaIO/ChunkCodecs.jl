@@ -1,22 +1,16 @@
 # Allow SzipHDF5Codec to be used as an encoder
 
 function pixel_byte_size(bits_per_pixel::Int32)::Int64
-    cld(Int32(1)<<(Int32(32)-leading_zeros(bits_per_pixel-Int32(1))), Int32(8))
-end
-
-# from https://ccsds.org/Pubs/121x0b3.pdf Table 5-1
-function block_overhead(bits_per_pixel)::Int64
     if bits_per_pixel ≤ 8
-        3
+        1
     elseif bits_per_pixel ≤ 16
-        4
+        2
     elseif bits_per_pixel ≤ 32
-        5
+        4
     else
-        throw(ArgumentError("invalid bits_per_pixel"))
+        8
     end
 end
-
 
 function decoded_size_range(x::SzipHDF5Codec)
     Int64(0):pixel_byte_size(x.bits_per_pixel):Int64(typemax(UInt32))
@@ -38,7 +32,17 @@ function encode_bound(x::SzipHDF5Codec, src_size::Int64)::Int64
     n_pixels = fld(src_size, bytes_per_pixel)
     n_scanlines = cld(n_pixels, Int64(x.pixels_per_scanline))
     n_blocks = blocks_per_scanline * n_scanlines
-    max_bits_per_block = Int64(x.pixels_per_block) * bits_per_pixel + block_overhead(bits_per_pixel)
+    # overhead from https://ccsds.org/Pubs/121x0b3.pdf Table 5-1
+    block_overhead = if bits_per_pixel ≤ 8
+        3
+    elseif bits_per_pixel ≤ 16
+        4
+    elseif bits_per_pixel ≤ 32
+        5
+    else
+        throw(ArgumentError("invalid bits_per_pixel"))
+    end
+    max_bits_per_block = Int64(x.pixels_per_block) * bits_per_pixel + block_overhead
     max_output_bits = max_bits_per_block * n_blocks
     return cld(max_output_bits, 8) + 4
 end
