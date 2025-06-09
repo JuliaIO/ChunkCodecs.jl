@@ -20,14 +20,33 @@ Blosc2 decompression using c-blosc2 library: https://github.com/Blosc/c-blosc2
 # Keyword Arguments
 
 - `codec::Blosc2Codec=Blosc2Codec()`
+
+# Keyword Arguments
+
+- `codec::Blosc2Codec=Blosc2Codec()`
+- `nthreads::Integer=1`: The number of threads to use
 """
 struct Blosc2DecodeOptions <: DecodeOptions
     codec::Blosc2Codec
+
+    nthreads::Int
 end
-Blosc2DecodeOptions(; codec::Blosc2Codec=Blosc2Codec(), kwargs...) = Blosc2DecodeOptions(codec)
+function Blosc2DecodeOptions(; codec::Blosc2Codec=Blosc2Codec(),
+                             nthreads::Integer=1,
+                             kwargs...)
+    _nthreads = nthreads
+    check_in_range(1:typemax(Int32); nthreads=_nthreads)
+
+    return Blosc2DecodeOptions(codec, _nthreads)
+end
+
+# This decoder is thread safe: We don't use any of Blosc2's global variables.
+is_thread_safe(::Blosc2DecodeOptions) = true
 
 function try_find_decoded_size(::Blosc2DecodeOptions, src::AbstractVector{UInt8})::Int64
     check_contiguous(src)
+
+    blosc2_init()
 
     copy_cframe = false
     schunk = @ccall libblosc2.blosc2_schunk_from_buffer(src::Ptr{UInt8}, length(src)::Int64, copy_cframe::UInt8)::Ptr{Blosc2SChunk}
@@ -51,6 +70,12 @@ function try_decode!(d::Blosc2DecodeOptions, dst::AbstractVector{UInt8}, src::Ab
                      kwargs...)::Union{Nothing,Int64}
     check_contiguous(dst)
     check_contiguous(src)
+
+    blosc2_init()
+
+    # I don't think there is a way to specify a decompression context.
+    # That means that our `Blosc2DecodeOptions` will be unused.
+    # We could try writing to the `dctx` field in the `schunk`.
 
     copy_cframe = false
     schunk = @ccall libblosc2.blosc2_schunk_from_buffer(src::Ptr{UInt8}, length(src)::Int64, copy_cframe::UInt8)::Ptr{Blosc2SChunk}

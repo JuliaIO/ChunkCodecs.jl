@@ -41,17 +41,17 @@ end
 @testset "invalid options" begin
     @test Blosc2EncodeOptions(; clevel=-1).clevel == 0
     @test Blosc2EncodeOptions(; clevel=100).clevel == 9
-    # typesize can be anything, but out of the range it gets set to 1
+    # typesize can be anything, but out of the range it gets set to 8 (the default)
     e = Blosc2EncodeOptions(; typesize=typemax(UInt128))
-    @test e.typesize == 1
+    @test e.typesize == 8
     e = Blosc2EncodeOptions(; typesize=0)
-    @test e.typesize == 1
+    @test e.typesize == 8
     e = Blosc2EncodeOptions(; typesize=-1)
-    @test e.typesize == 1
+    @test e.typesize == 8
     e = Blosc2EncodeOptions(; typesize=ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE)
     @test e.typesize == ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE
     e = Blosc2EncodeOptions(; typesize=(ChunkCodecLibBlosc2.BLOSC_MAX_TYPESIZE+1))
-    @test e.typesize == 1
+    @test e.typesize == 8
     @test_throws ArgumentError Blosc2EncodeOptions(; compressor="")
     @test_throws ArgumentError Blosc2EncodeOptions(; compressor="asfdgfsdgrwwea")
     @test_throws ArgumentError Blosc2EncodeOptions(; compressor="blosclz,")
@@ -73,7 +73,7 @@ end
     # check Blosc2DecodingError prints the correct error message
     @test sprint(Base.showerror, Blosc2DecodingError()) == "Blosc2DecodingError: blosc2 compressed buffer cannot be decoded"
     # check that a truncated buffer throws a Blosc2DecodingError
-    u = UInt8[0x00]
+    u = zeros(UInt8, 8)
     c = encode(Blosc2EncodeOptions(), u)
     @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), c[1:(end - 1)])
     @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), UInt8[0x00])

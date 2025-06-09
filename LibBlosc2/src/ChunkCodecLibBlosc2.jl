@@ -1,6 +1,7 @@
 module ChunkCodecLibBlosc2
 
 using Base.Libc: free
+using Base.Threads
 
 using Accessors
 
@@ -53,9 +54,5 @@ decode_options(::Blosc2Codec) = Blosc2DecodeOptions()
 
 include("encode.jl")
 include("decode.jl")
-
-# Initialize the Blosc2 library. This function is idempotent, i.e. it
-# can be called called multiple times without harm.
-__init__() = @ccall libblosc2.blosc2_init()::Cvoid
 
 end # module ChunkCodecLibBlosc2

@@ -7,49 +7,132 @@ Blosc2 compression using c-blosc2 library: https://github.com/Blosc2/c-blosc2
 # Keyword Arguments
 
 - `codec::Blosc2Codec=Blosc2Codec()`
+- `doshuffle::Union{Integer,Symbol,AbstractString}=1`: Whether to use the shuffle filter.
+
+  Possible values are
+  - `:noshuffle`, `"noshuffle"`, 0: do not shuffle
+  - `:shuffle`, `"shuffle"`, 1: shuffle bytes
+  - `:bitshuffle`, `"bitshuffle"`, 2: shuffle bits (slower but compresses better)
+- `dodelta::Union{Integer,Symbol,AbstractString}=1`: Whether to use the delta filter.
+
+  Possible values are
+  - `:nofilter`, `"nofilter"`, 0: no filter
+  - `:delta`, `"delta"`, 1: use delta filter
+- `typesize::Integer=8`: The element size to use when shuffling.
+
+  `typesize` must be in the range `1:$(BLOSC_MAX_TYPESIZE)`.
 - `clevel::Integer=5`: The compression level, between 0 (no compression) and 9 (maximum compression)
-- `doshuffle::Integer=1`: Whether to use the shuffle filter.
+- `compressor::AbstractString="blosclz"`: The string representing the type of compressor to use.
 
-  0 means not applying it, 1 means applying it at a byte level,
-  and 2 means at a bit level (slower but may achieve better entropy alignment).
-- `typesize::Integer=1`: The element size to use when shuffling.
-
-  For implementation reasons, only `typesize` in `1:$(BLOSC_MAX_TYPESIZE)` will allow the
-  shuffle filter to work.  When `typesize` is not in this range, shuffle
-  will be silently disabled.
-- `compressor::AbstractString="lz4"`: The string representing the type of compressor to use.
-
-  For example, "blosclz", "lz4", "lz4hc", "zlib", or "zstd".
+  For example, `"blosclz"`, `"lz4"`, `"lz4hc"`, `"zlib"`, or `"zstd"`.
   Use `is_compressor_valid` to check if a compressor is supported.
+- `blocksize::Integer=0`: Length of block in bytes (0 for automatic choice)
+- `nthreads::Integer=1`: The number of threads to use
+- `splitmode::Union{Integer,Symbol,AbstractString}=4: Whether blocks should be split or not
+
+  Possible values are
+  - `:always`, `"always"`, 1
+  - `:never`, `"never"`, 2
+  - `:auto`, `"auto"`, 3
+  - `:forward_compat`, `"forward_compat"`, 4: default setting
+- `chunksize::Integer=1024^3`: Chunk size for very large inputs
 """
 struct Blosc2EncodeOptions <: EncodeOptions
     codec::Blosc2Codec
-    clevel::Int32
-    doshuffle::Int32
-    typesize::Int64
-    chunksize::Int64
+
+    doshuffle::Int              # :noshuffle, :shuffle, :bitshuffle
+    dodelta::Int                # :nofilter, :delta
+    typesize::Int
+    clevel::Int
     compressor::String
+    blocksize::Int
+    nthreads::Int
+    splitmode::Int              # :always, :never, :auto, :forward_compat
+
+    chunksize::Int64
 end
 function Blosc2EncodeOptions(;
                              codec::Blosc2Codec=Blosc2Codec(),
+                             doshuffle::Union{Integer,Symbol,AbstractString}=1,
+                             dodelta::Union{Integer,Symbol,AbstractString}=0,
+                             typesize::Integer=8,
                              clevel::Integer=5,
-                             doshuffle::Integer=1,
-                             typesize::Integer=1,
+                             compressor::Union{Symbol,AbstractString}=:blosclz,
+                             blocksize::Integer=0,
+                             nthreads::Integer=1,
+                             splitmode::Union{Integer,Symbol,AbstractString}=4,
                              chunksize::Integer=Int64(1024)^3, # 1 GByte
-                             compressor::AbstractString="lz4",
                              kwargs...)
-    _clevel = Int32(clamp(clevel, 0, 9))
-    check_in_range(0:2; doshuffle)
-    _typesize = if typesize ∈ 2:BLOSC_MAX_TYPESIZE
-        Int64(typesize)
-    else
-        Int64(1)
+    _doshuffle = doshuffle
+    if _doshuffle isa AbstractString
+        _doshuffle = Symbol(lowercase(_doshuffle))
     end
-    _chunksize = Int64(clamp(chunksize, 1024, Int64(1024)^3)) # 1 GByte
-    is_compressor_valid(compressor) ||
+    if _doshuffle isa Symbol
+        _doshuffle = get(Dict(:noshuffle => 0,
+                              :shuffle => 1,
+                              :bitshuffle => 2), _doshuffle, -1)
+        _doshuffle >= 0 ||
+            throw(ArgumentError("Unknown `doshuffle` value `$(repr(doshuffle))`"))
+    end
+    _doshuffle::Integer
+    check_in_range(0:2; doshuffle=_doshuffle)
+
+    _dodelta = dodelta
+    if _dodelta isa AbstractString
+        _dodelta = Symbol(lowercase(_dodelta))
+    end
+    if _dodelta isa Symbol
+        _dodelta = get(Dict(:nofilter => 0,
+                            :delta => 1), _dodelta, -1)
+        _dodelta >= 0 ||
+            throw(ArgumentError("Unknown `dodelta` value `$(repr(dodelta))`"))
+    end
+    _dodelta::Integer
+    check_in_range(0:1; dodelta=_dodelta)
+
+    _typesize = typesize
+    if _typesize ∉ 1:BLOSC_MAX_TYPESIZE
+        _typesize = 8           # use default
+    end
+
+    _clevel = clamp(clevel, 0:9)
+
+    _compressor = compressor
+    if _compressor isa Symbol
+        _compressor = string(_compressor)
+    end
+    is_compressor_valid(_compressor) ||
         throw(ArgumentError("is_compressor_valid(compressor) must hold. Got\ncompressor => $(repr(compressor))"))
-    return Blosc2EncodeOptions(codec, _clevel, doshuffle, _typesize, _chunksize, compressor)
+
+    _blocksize = blocksize
+    check_in_range(0:typemax(Int32); blocksize=_blocksize)
+
+    _nthreads=nthreads
+    check_in_range(1:typemax(Int32); nthreads=_nthreads)
+
+    _splitmode = splitmode
+    if _splitmode isa AbstractString
+        _splitmode = Symbol(lowercase(_splitmode))
+    end
+    if _splitmode isa Symbol
+        _splitmode = get(Dict(:always => 1,
+                              :never => 2,
+                              :auto => 3,
+                              :forward_compat => 4), _splitmode, -1)
+        _splitmode >= 0 ||
+            throw(ArgumentError("Unknown `splitmode` value `$(repr(splitmode))`"))
+    end
+    _splitmode::Integer
+    check_in_range(1:4; splitmode=_splitmode)
+
+    _chunksize = clamp(chunksize, 1024, Int64(1024)^3) # at least 1 kByte, at most 1 GByte
+
+    return Blosc2EncodeOptions(codec,
+                               _doshuffle, _dodelta, _typesize, _clevel, _compressor, _blocksize, _nthreads, _splitmode, _chunksize)
 end
+
+# This encoder is thread safe: We don't use any of Blosc2's global variables.
+is_thread_safe(::Blosc2EncodeOptions) = true
 
 # The maximum overhead for the schunk
 const MAX_SCHUNK_OVERHEAD = 172 # apparently undocumented -- just a guess
@@ -69,35 +152,36 @@ function try_encode!(e::Blosc2EncodeOptions, dst::AbstractVector{UInt8}, src::Ab
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
 
+    blosc2_init()
+
     ccode = compcode(e.compressor)
     @assert ccode >= 0
-    numinternalthreads = 1
 
     # Create a super-chunk container
     cparams = Blosc2CParams()
     @reset cparams.typesize = e.typesize
     @reset cparams.compcode = ccode
     @reset cparams.clevel = e.clevel
-    @reset cparams.nthreads = numinternalthreads
+    @reset cparams.nthreads = e.nthreads
+    @reset cparams.blocksize = e.blocksize
+    @reset cparams.splitmode = e.splitmode
     @reset cparams.filters[BLOSC2_MAX_FILTERS] = e.doshuffle
+    if e.dodelta > 0
+        @reset cparams.filters[BLOSC2_MAX_FILTERS-1] = e.dodelta
+    end
     cparams_obj = [cparams]
-
-    dparams = Blosc2DParams()
-    @reset dparams.nthreads = numinternalthreads
-    dparams_obj = [dparams]
 
     io = Blosc2IO()
     io_obj = [io]
 
     storage = Blosc2Storage()
     @reset storage.cparams = pointer(cparams_obj)
-    @reset storage.dparams = pointer(dparams_obj)
     @reset storage.io = pointer(io_obj)
     storage_obj = [storage]
 
     there_was_an_error = false
 
-    GC.@preserve cparams_obj dparams_obj io_obj storage_obj begin
+    GC.@preserve cparams_obj io_obj storage_obj begin
         schunk = @ccall libblosc2.blosc2_schunk_new(storage_obj::Ptr{Blosc2Storage})::Ptr{Blosc2SChunk}
         @assert schunk != Ptr{Blosc2Storage}()
 

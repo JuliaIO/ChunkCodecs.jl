@@ -225,6 +225,21 @@ end
 ################################################################################
 # Functions
 
+const blosc2_initialized = Atomic{Bool}(false)
+const blosc2_initialized_lock = ReentrantLock()
+# Initialize the Blosc2 library. This function is reentrant and
+# idempotent, i.e. it can be called called multiple times without
+# harm.
+function blosc2_init()
+    blosc2_initialized[] && return
+    @lock blosc2_initialized_lock begin
+        blosc2_initialized[] && return
+        @ccall libblosc2.blosc2_init()::Cvoid
+        blosc2_initialized[] = true
+    end
+    return
+end
+
 """
     is_compressor_valid(s::AbstractString)::Bool
 
