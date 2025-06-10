@@ -28,50 +28,50 @@ jobs:
       id: filter
       with:
         filters: |
-          ChunkCodecCore:
-            - .github/**
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-          LibBlosc:
-            - .github/**
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibBlosc/**
+          #TODO ChunkCodecCore:
+          #TODO   - .github/**
+          #TODO   - ChunkCodecCore/**
+          #TODO   - ChunkCodecTests/**
+          #TODO LibBlosc:
+          #TODO   - .github/**
+          #TODO   - ChunkCodecCore/**
+          #TODO   - ChunkCodecTests/**
+          #TODO   - LibBlosc/**
           LibBlosc2:
             - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibBlosc2/**
-          LibBrotli:
-            - .github/**
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibBrotli/**
-          LibBzip2:
-            - .github/**
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibBzip2/**
-          LibLz4:
-            - .github/**
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibLz4/**
-          LibSnappy:
-            - .github/**
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibSnappy/**
-          LibZlib:
-            - .github/**
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibZlib/**
-          LibZstd:
-            - .github/**
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibZstd/**
+          #TODO LibBrotli:
+          #TODO   - .github/**
+          #TODO   - ChunkCodecCore/**
+          #TODO   - ChunkCodecTests/**
+          #TODO   - LibBrotli/**
+          #TODO LibBzip2:
+          #TODO   - .github/**
+          #TODO   - ChunkCodecCore/**
+          #TODO   - ChunkCodecTests/**
+          #TODO   - LibBzip2/**
+          #TODO LibLz4:
+          #TODO   - .github/**
+          #TODO   - ChunkCodecCore/**
+          #TODO   - ChunkCodecTests/**
+          #TODO   - LibLz4/**
+          #TODO LibSnappy:
+          #TODO   - .github/**
+          #TODO   - ChunkCodecCore/**
+          #TODO   - ChunkCodecTests/**
+          #TODO   - LibSnappy/**
+          #TODO LibZlib:
+          #TODO   - .github/**
+          #TODO   - ChunkCodecCore/**
+          #TODO   - ChunkCodecTests/**
+          #TODO   - LibZlib/**
+          #TODO LibZstd:
+          #TODO   - .github/**
+          #TODO   - ChunkCodecCore/**
+          #TODO   - ChunkCodecTests/**
+          #TODO   - LibZstd/**
   test:
     name: Julia ${{ matrix.version }} - ${{matrix.package}} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
