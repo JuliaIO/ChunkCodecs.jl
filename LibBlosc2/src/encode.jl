@@ -131,9 +131,6 @@ function Blosc2EncodeOptions(;
                                _doshuffle, _dodelta, _typesize, _clevel, _compressor, _blocksize, _nthreads, _splitmode, _chunksize)
 end
 
-# This encoder is thread safe: We don't use any of Blosc2's global variables.
-is_thread_safe(::Blosc2EncodeOptions) = true
-
 # The maximum overhead for the schunk
 const MAX_SCHUNK_OVERHEAD = 172 # apparently undocumented -- just a guess
 

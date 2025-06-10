@@ -40,9 +40,6 @@ function Blosc2DecodeOptions(; codec::Blosc2Codec=Blosc2Codec(),
     return Blosc2DecodeOptions(codec, _nthreads)
 end
 
-# This decoder is thread safe: We don't use any of Blosc2's global variables.
-is_thread_safe(::Blosc2DecodeOptions) = true
-
 function try_find_decoded_size(::Blosc2DecodeOptions, src::AbstractVector{UInt8})::Int64
     check_contiguous(src)
 
