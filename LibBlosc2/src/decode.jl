@@ -61,7 +61,7 @@ function try_find_decoded_size(::Blosc2DecodeOptions, src::AbstractVector{UInt8}
     return total_nbytes::Int64
 end
 
-#TODO: implement `try_resize_decode!`
+# Note: We should implement `try_resize_decode!`
 
 function try_decode!(d::Blosc2DecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8};
                      kwargs...)::Union{Nothing,Int64}

@@ -71,22 +71,16 @@ end
 end
 @testset "errors" begin
     # check Blosc2DecodingError prints the correct error message
-    @show :sprint
     @test sprint(Base.showerror, Blosc2DecodingError()) == "Blosc2DecodingError: blosc2 compressed buffer cannot be decoded"
     # check that a truncated buffer throws a Blosc2DecodingError
     u = zeros(UInt8, 8)
-    @show :encode1
     c = encode(Blosc2EncodeOptions(), u)
-    @show :decode1
     @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), c[1:(end - 1)])
-    @show :decode2
     @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), UInt8[0x00])
     # check that a buffer with extra data throws a Blosc2DecodingError
-    @show :decode3
     @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), [c; 0x00;])
     # check corrupting LZ4 encoding throws a Blosc2DecodingError
     u = zeros(UInt8, 1000)
-    @show :encode2
     c = encode(Blosc2EncodeOptions(), u)
 
     c[end-5] = 0x40
@@ -95,20 +89,21 @@ end
     # compressed data.) We check whether at least the decompressed
     # data are correct.
     # BROKEN @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), c)
-    @show :decode4
     @test decode(Blosc2DecodeOptions(), c) == u
 
     # There's more unused/unchecked data
     c[end-50] = 0x40
     # BROKEN @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), c)
-    @show :decode5
     @test decode(Blosc2DecodeOptions(), c) == u
 
     # Finally, this corruption has an effect
     c[end-100] = 0x40
-    @show :decode6
-    @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), c)
-    @show :errors
+    # Windows segfaults in this call with exit code 3221226356,
+    # indicating a heap corruption. That's clearly a bug in c-blosc2.
+    # It seems c-blosc2 does not checksum its compressed data.
+    if !Sys.iswindows()
+        @test_throws Blosc2DecodingError decode(Blosc2DecodeOptions(), c)
+    end
 end
 @testset "public" begin
     if VERSION >= v"1.11.0-DEV.469"
