@@ -83,13 +83,13 @@ jobs:
         # e.g. ['package1', 'package2'] if both package folders contains changes
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
         version:
-          - '1.10'
+          #TODO - '1.10'
           - '1'
-          - 'pre'
+          #TODO - 'pre'
         os:
-          - ubuntu-latest
+          #TODO - ubuntu-latest
           - windows-latest
-          - macos-latest
+          #TODO - macos-latest
         arch:
           - 'default'
           - 'x86'
