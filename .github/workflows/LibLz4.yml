@@ -1,0 +1,26 @@
+name: LibLz4 CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibLz4/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibLz4/**
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/reusable-julia-test.yml
+    with:
+      package-name: LibLz4
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

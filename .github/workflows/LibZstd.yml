@@ -1,0 +1,26 @@
+name: LibZstd CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibZstd/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibZstd/**
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/reusable-julia-test.yml
+    with:
+      package-name: LibZstd
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

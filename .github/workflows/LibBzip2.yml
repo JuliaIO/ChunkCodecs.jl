@@ -1,0 +1,26 @@
+name: LibBzip2 CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibBzip2/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibBzip2/**
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/reusable-julia-test.yml
+    with:
+      package-name: LibBzip2
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

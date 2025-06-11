@@ -1,0 +1,24 @@
+name: ChunkCodecCore CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/reusable-julia-test.yml
+    with:
+      package-name: ChunkCodecCore
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

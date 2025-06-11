@@ -1,0 +1,26 @@
+name: LibBlosc CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibBlosc/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibBlosc/**
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/reusable-julia-test.yml
+    with:
+      package-name: LibBlosc
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

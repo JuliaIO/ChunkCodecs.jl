@@ -1,0 +1,26 @@
+name: LibBrotli CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibBrotli/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ChunkCodecCore/**
+      - ChunkCodecTests/**
+      - LibBrotli/**
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/reusable-julia-test.yml
+    with:
+      package-name: LibBrotli
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
