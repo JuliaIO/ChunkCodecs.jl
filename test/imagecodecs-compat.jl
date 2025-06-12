@@ -1,5 +1,6 @@
 using PythonCall
 using
+    ChunkCodecLibAec,
     ChunkCodecLibBlosc,
     ChunkCodecLibBrotli,
     ChunkCodecLibBzip2,
@@ -12,6 +13,22 @@ using ChunkCodecTests: rand_test_data
 using Test
 
 codecs = [
+    (
+        ChunkCodecLibAec.SzipHDF5EncodeOptions(;codec=ChunkCodecLibAec.SzipHDF5Codec(;
+            options_mask=Int32(0),
+            pixels_per_block=16,
+            bits_per_pixel=16,
+            pixels_per_scanline=16,
+        )),
+        ("szip", (;
+            options_mask=0,
+            pixels_per_block=16,
+            bits_per_pixel=16,
+            pixels_per_scanline=16,
+            header=true,
+        )),
+        1000,
+    ),
     (ChunkCodecLibBlosc.BloscEncodeOptions(),   ("blosc",   (;)), 1000),
     (ChunkCodecLibBrotli.BrotliEncodeOptions(;quality=9),   ("brotli",   (;)), 50),
     (ChunkCodecLibBzip2.BZ2EncodeOptions(),     ("bz2",     (;)), 50),
