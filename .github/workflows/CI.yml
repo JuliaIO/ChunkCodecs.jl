@@ -29,11 +29,9 @@ jobs:
       with:
         filters: |
           ChunkCodecCore:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
           LibBlosc:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibBlosc/**
@@ -43,32 +41,26 @@ jobs:
             - ChunkCodecTests/**
             - LibBlosc2/**
           LibBrotli:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibBrotli/**
           LibBzip2:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibBzip2/**
           LibLz4:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibLz4/**
           LibSnappy:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibSnappy/**
           LibZlib:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibZlib/**
           LibZstd:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibZstd/**
