@@ -35,6 +35,10 @@ jobs:
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibBlosc/**
+          LibBlosc2:
+            - ChunkCodecCore/**
+            - ChunkCodecTests/**
+            - LibBlosc2/**
           LibBrotli:
             - ChunkCodecCore/**
             - ChunkCodecTests/**
