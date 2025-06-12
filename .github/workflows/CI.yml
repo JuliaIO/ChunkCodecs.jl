@@ -36,7 +36,6 @@ jobs:
             - ChunkCodecTests/**
             - LibBlosc/**
           LibBlosc2:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibBlosc2/**
