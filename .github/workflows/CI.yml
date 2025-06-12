@@ -32,7 +32,6 @@ jobs:
             - ChunkCodecCore/**
             - ChunkCodecTests/**
           LibAec:
-            - .github/**
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibAec/**
