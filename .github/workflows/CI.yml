@@ -31,6 +31,10 @@ jobs:
           ChunkCodecCore:
             - ChunkCodecCore/**
             - ChunkCodecTests/**
+          LibAec:
+            - ChunkCodecCore/**
+            - ChunkCodecTests/**
+            - LibAec/**
           LibBlosc:
             - ChunkCodecCore/**
             - ChunkCodecTests/**

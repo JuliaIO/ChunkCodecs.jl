@@ -2,6 +2,7 @@
 projects = [
     "ChunkCodecCore",
     "ChunkCodecTests",
+    "LibAec",
     "LibBlosc",
     "LibBrotli",
     "LibBzip2",
