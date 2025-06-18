@@ -92,7 +92,7 @@ function try_encode!(e::SzipHDF5Codec, dst::AbstractVector{UInt8}, src::Abstract
     elseif ret == SZ_PARAM_ERROR
         throw(ArgumentError("invalid szip parameters"))
     else
-        throw(error("unknown szip error code: $(ret)"))
+        error("unknown szip error code: $(ret)")
     end
 end
 

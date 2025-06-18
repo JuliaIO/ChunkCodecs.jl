@@ -8,7 +8,7 @@ using ChunkCodecLibAec:
     SZ_MSB_OPTION_MASK,
     SZ_NN_OPTION_MASK
 using ChunkCodecCore: decode, encode
-using ChunkCodecTests: test_codec
+using ChunkCodecTests: test_codec, test_encoder_decoder
 using Test: @testset, @test_throws, @test
 using Aqua: Aqua
 
@@ -27,6 +27,9 @@ Random.seed!(1234)
             end
         end
     end
+    # SzipHDF5Codec can be used as an encoder and decoder
+    c = SzipHDF5Codec(;options_mask=Int32(0), bits_per_pixel=8, pixels_per_block=8, pixels_per_scanline=16)
+    test_encoder_decoder(c, c; trials=20)
 end
 @testset "non multiples of eight `bits_per_pixel`" begin
     for (T, bits) in [(UInt8, 1:7), (UInt16, 9:15), (UInt32, 17:31)]

@@ -47,15 +47,17 @@ The maximum decoded size is about 4 GB.
 
 $(sziphdf5_docs)
 
-Warning: 
-
 A `SzipHDF5Codec` can be used as an encoder or decoder.
+
+Warning: Setting `bits_per_pixel` to anything other than
+8, 16, 32, or 64 may lead to undefined output.
+See below for more details.
 
 # Fields
 
 ## `options_mask::Int32`: A bitwise or of the following constants.
 - `SZ_MSB_OPTION_MASK`:
-    input data is stored most significant byte first
+    input pixel data is stored most significant byte first
     i.e. big endian.
     Little endian is default and `SZ_LSB_OPTION_MASK` is ignored by libaec,
     but HDF5 tries to ensure exactly one of `SZ_MSB_OPTION_MASK` and `SZ_LSB_OPTION_MASK`
