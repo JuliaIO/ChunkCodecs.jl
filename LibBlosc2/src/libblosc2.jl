@@ -259,7 +259,7 @@ Throws an `ArgumentError` if `s` is not the name of a supported algorithm.
 """
 function compcode(s::AbstractString)
     code = @ccall libblosc2.blosc2_compname_to_compcode(s::Cstring)::Cint
-    code == -1 && throw(ArgumentError("unrecognized compressor $(repr(s))"))
+    code < 0 && throw(ArgumentError("unrecognized compressor $(repr(s))"))
     return Int(code)
 end
 

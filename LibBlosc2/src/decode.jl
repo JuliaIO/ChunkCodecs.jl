@@ -4,10 +4,11 @@
 Error for data that cannot be decoded.
 """
 struct Blosc2DecodingError <: DecodingError
+    code::Cint
 end
 
 function Base.showerror(io::IO, err::Blosc2DecodingError)
-    print(io, "Blosc2DecodingError: blosc2 compressed buffer cannot be decoded")
+    print(io, "Blosc2DecodingError: blosc2 compressed buffer cannot be decoded, error code: $(err.code)")
     return nothing
 end
 
@@ -19,19 +20,15 @@ Blosc2 decompression using c-blosc2 library: https://github.com/Blosc/c-blosc2
 
 # Keyword Arguments
 
-- `codec::Blosc2Codec=Blosc2Codec()`
-
-# Keyword Arguments
-
-- `codec::Blosc2Codec=Blosc2Codec()`
-- `nthreads::Integer=1`: The number of threads to use
+- `codec::Blosc2CFrame = Blosc2CFrame()`
+- `nthreads::Integer = 1`: The number of threads to use
 """
 struct Blosc2DecodeOptions <: DecodeOptions
-    codec::Blosc2Codec
+    codec::Blosc2CFrame
 
     nthreads::Int
 end
-function Blosc2DecodeOptions(; codec::Blosc2Codec=Blosc2Codec(),
+function Blosc2DecodeOptions(; codec::Blosc2CFrame=Blosc2CFrame(),
                              nthreads::Integer=1,
                              kwargs...)
     _nthreads = nthreads
@@ -49,14 +46,17 @@ function try_find_decoded_size(::Blosc2DecodeOptions, src::AbstractVector{UInt8}
     schunk = @ccall libblosc2.blosc2_schunk_from_buffer(src::Ptr{UInt8}, length(src)::Int64, copy_cframe::UInt8)::Ptr{Blosc2SChunk}
     if schunk == Ptr{Blosc2Storage}()
         # These are not a valid blosc2-encoded data
-        throw(Blosc2DecodingError())
+        throw(Blosc2DecodingError(0))
     end
     @ccall libblosc2.blosc2_schunk_avoid_cframe_free(schunk::Ptr{Blosc2SChunk}, true::UInt8)::Cvoid
 
     total_nbytes = unsafe_load(schunk).nbytes
 
     success = @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Cvoid})::Cint
-    @assert success == 0
+    if success != 0
+        # Something went wrong
+        throw(Blosc2DecodingError(0))
+    end
 
     return total_nbytes::Int64
 end
@@ -78,7 +78,7 @@ function try_decode!(d::Blosc2DecodeOptions, dst::AbstractVector{UInt8}, src::Ab
     schunk = @ccall libblosc2.blosc2_schunk_from_buffer(src::Ptr{UInt8}, length(src)::Int64, copy_cframe::UInt8)::Ptr{Blosc2SChunk}
     if schunk == Ptr{Blosc2Storage}()
         # These are not a valid blosc2-encoded data
-        throw(Blosc2DecodingError())
+        throw(Blosc2DecodingError(0))
     end
     @ccall libblosc2.blosc2_schunk_avoid_cframe_free(schunk::Ptr{Blosc2SChunk}, true::UInt8)::Cvoid
 
@@ -86,7 +86,10 @@ function try_decode!(d::Blosc2DecodeOptions, dst::AbstractVector{UInt8}, src::Ab
     if total_nbytes > length(dst)
         # There is not enough space to decode the data
         success = @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Cvoid})::Cint
-        @assert success == 0
+        if success != 0
+            # Something went wrong
+            throw(Blosc2DecodingError(0))
+        end
 
         return nothing
     end
@@ -98,14 +101,23 @@ function try_decode!(d::Blosc2DecodeOptions, dst::AbstractVector{UInt8}, src::Ab
         nbytes_left = clamp(total_nbytes - dst_position, Int32)
         nbytes = @ccall libblosc2.blosc2_schunk_decompress_chunk(schunk::Ptr{Blosc2SChunk}, nchunk::Int64,
                                                                  pointer(dst, dst_position+1)::Ptr{Cvoid}, nbytes_left::Int32)::Cint
-        @assert nbytes > 0
+        if nbytes <= 0
+            # There was an error decompressing the data
+            throw(Blosc2DecodingError(nbytes))
+        end
 
         dst_position += nbytes
     end
-    @assert dst_position == total_nbytes
+    if dst_position != total_nbytes
+        # The decompressed size is inconsistent
+        throw(Blosc2DecodingError(0))
+    end
 
     success = @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Cvoid})::Cint
-    @assert success == 0
+    if success != 0
+        # Something went wrong
+        throw(Blosc2DecodingError(0))
+    end
 
     return total_nbytes::Int64
 end

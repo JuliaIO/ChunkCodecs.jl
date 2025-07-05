@@ -6,39 +6,39 @@ Blosc2 compression using c-blosc2 library: https://github.com/Blosc2/c-blosc2
 
 # Keyword Arguments
 
-- `codec::Blosc2Codec=Blosc2Codec()`
-- `doshuffle::Union{Integer,Symbol,AbstractString}=1`: Whether to use the shuffle filter.
+- `codec::Blosc2CFrame = Blosc2CFrame()`
+- `doshuffle::Union{Integer,Symbol,AbstractString} = 1`: Whether to use the shuffle filter.
 
   Possible values are
   - `:noshuffle`, `"noshuffle"`, 0: do not shuffle
   - `:shuffle`, `"shuffle"`, 1: shuffle bytes
   - `:bitshuffle`, `"bitshuffle"`, 2: shuffle bits (slower but compresses better)
-- `dodelta::Union{Integer,Symbol,AbstractString}=1`: Whether to use the delta filter.
+- `dodelta::Union{Integer,Symbol,AbstractString} = 1`: Whether to use the delta filter.
 
   Possible values are
   - `:nofilter`, `"nofilter"`, 0: no filter
   - `:delta`, `"delta"`, 1: use delta filter
-- `typesize::Integer=8`: The element size to use when shuffling.
+- `typesize::Integer = 8`: The element size to use when shuffling.
 
   `typesize` must be in the range `1:$(BLOSC_MAX_TYPESIZE)`.
-- `clevel::Integer=5`: The compression level, between 0 (no compression) and 9 (maximum compression)
-- `compressor::AbstractString="blosclz"`: The string representing the type of compressor to use.
+- `clevel::Integer = 5`: The compression level, between 0 (no compression) and 9 (maximum compression)
+- `compressor::AbstractString = "blosclz"`: The string representing the type of compressor to use.
 
   For example, `"blosclz"`, `"lz4"`, `"lz4hc"`, `"zlib"`, or `"zstd"`.
   Use `is_compressor_valid` to check if a compressor is supported.
-- `blocksize::Integer=0`: Length of block in bytes (0 for automatic choice)
-- `nthreads::Integer=1`: The number of threads to use
-- `splitmode::Union{Integer,Symbol,AbstractString}=4: Whether blocks should be split or not
+- `blocksize::Integer = 0`: Length of block in bytes (0 for automatic choice)
+- `nthreads::Integer = 1`: The number of threads to use
+- `splitmode::Union{Integer,Symbol,AbstractString} = 4: Whether blocks should be split or not
 
   Possible values are
   - `:always`, `"always"`, 1
   - `:never`, `"never"`, 2
   - `:auto`, `"auto"`, 3
   - `:forward_compat`, `"forward_compat"`, 4: default setting
-- `chunksize::Integer=1024^3`: Chunk size for very large inputs
+- `chunksize::Integer = 1024^3`: Chunk size for very large inputs
 """
 struct Blosc2EncodeOptions <: EncodeOptions
-    codec::Blosc2Codec
+    codec::Blosc2CFrame
 
     doshuffle::Int              # :noshuffle, :shuffle, :bitshuffle
     dodelta::Int                # :nofilter, :delta
@@ -52,7 +52,7 @@ struct Blosc2EncodeOptions <: EncodeOptions
     chunksize::Int64
 end
 function Blosc2EncodeOptions(;
-                             codec::Blosc2Codec=Blosc2Codec(),
+                             codec::Blosc2CFrame=Blosc2CFrame(),
                              doshuffle::Union{Integer,Symbol,AbstractString}=1,
                              dodelta::Union{Integer,Symbol,AbstractString}=0,
                              typesize::Integer=8,
@@ -176,11 +176,12 @@ function try_encode!(e::Blosc2EncodeOptions, dst::AbstractVector{UInt8}, src::Ab
     @reset storage.io = pointer(io_obj)
     storage_obj = [storage]
 
-    there_was_an_error = false
-
     GC.@preserve cparams_obj io_obj storage_obj begin
         schunk = @ccall libblosc2.blosc2_schunk_new(storage_obj::Ptr{Blosc2Storage})::Ptr{Blosc2SChunk}
-        @assert schunk != Ptr{Blosc2Storage}()
+        if schunk == Ptr{Blosc2Storage}()
+            # Allocation failure
+            return nothing
+        end
 
         # Break input into chunks
         for pos in 1:e.chunksize:src_size
@@ -189,15 +190,27 @@ function try_encode!(e::Blosc2EncodeOptions, dst::AbstractVector{UInt8}, src::Ab
             nbytes = length(srcview)
             nchunks = @ccall libblosc2.blosc2_schunk_append_buffer(schunk::Ptr{Blosc2SChunk}, srcview::Ptr{Cvoid},
                                                                    nbytes::Int32)::Int64
-            @assert nchunks >= 0
-            @assert nchunks == (pos-1) ÷ e.chunksize + 1
+            if nchunks < 0
+                # Internal error in libblosc2, possibly due to invalid input
+                @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Blosc2SChunk})::Cint
+                return nothing
+            end
+            if nchunks != (pos-1) ÷ e.chunksize + 1
+                # Our accounting went wrong, probably an internal error in libblosc2, possibly due to invalid input
+                @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Blosc2SChunk})::Cint
+                return nothing
+            end
         end
 
         cframe = Ref{Ptr{UInt8}}()
         needs_free = Ref{UInt8}()   # bool
         compressed_size = @ccall libblosc2.blosc2_schunk_to_buffer(schunk::Ptr{Blosc2SChunk}, cframe::Ref{Ptr{UInt8}},
                                                                    needs_free::Ref{UInt8})::Int64
-        @assert compressed_size >= 0
+        if compressed_size < 0
+            # Internal error in libblosc2, possibly due to invalid input
+            @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Blosc2SChunk})::Cint
+            return nothing
+        end
         cframe = cframe[]
         needs_free = Bool(needs_free[])
 
@@ -208,19 +221,20 @@ function try_encode!(e::Blosc2EncodeOptions, dst::AbstractVector{UInt8}, src::Ab
         else
             # Insufficient space to stored compressed data.
             # We should detect this earlier, already in the loop above.
-            there_was_an_error = true
+            needs_free && Libc.free(cframe)
+            @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Blosc2SChunk})::Cint
+            return nothing
         end
-
-        success = @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Blosc2SChunk})::Cint
-        @assert success == 0
 
         if needs_free
             Libc.free(cframe)
         end
-    end
 
-    if there_was_an_error
-        return nothing
+        success = @ccall libblosc2.blosc2_schunk_free(schunk::Ptr{Blosc2SChunk})::Cint
+        if success != 0
+            # Internal error in libblosc2, possibly due to invalid input
+            return nothing
+        end
     end
 
     return compressed_size::Int64

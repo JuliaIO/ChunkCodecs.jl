@@ -1,7 +1,7 @@
 using Random: Random
 using ChunkCodecLibBlosc2:
                            ChunkCodecLibBlosc2,
-                           Blosc2Codec,
+                           Blosc2CFrame,
                            Blosc2EncodeOptions,
                            Blosc2DecodeOptions,
                            Blosc2DecodingError
@@ -15,17 +15,17 @@ Aqua.test_all(ChunkCodecLibBlosc2; persistent_tasks=false)
 Random.seed!(1234)
 
 @testset "default" begin
-    test_codec(Blosc2Codec(), Blosc2EncodeOptions(), Blosc2DecodeOptions(); trials=100)
+    test_codec(Blosc2CFrame(), Blosc2EncodeOptions(), Blosc2DecodeOptions(); trials=100)
 end
 @testset "typesize" begin
     for i in 1:50
-        test_codec(Blosc2Codec(), Blosc2EncodeOptions(; typesize=i), Blosc2DecodeOptions(); trials=10)
+        test_codec(Blosc2CFrame(), Blosc2EncodeOptions(; typesize=i), Blosc2DecodeOptions(); trials=10)
     end
 end
 @testset "compressors" begin
     for clevel in 0:9
         for compressor in ["blosclz", "lz4", "lz4hc", "zlib", "zstd"]
-            test_codec(Blosc2Codec(), Blosc2EncodeOptions(; compressor, clevel), Blosc2DecodeOptions(); trials=10)
+            test_codec(Blosc2CFrame(), Blosc2EncodeOptions(; compressor, clevel), Blosc2DecodeOptions(); trials=10)
         end
     end
 end
@@ -71,7 +71,7 @@ end
 end
 @testset "errors" begin
     # check Blosc2DecodingError prints the correct error message
-    @test sprint(Base.showerror, Blosc2DecodingError()) == "Blosc2DecodingError: blosc2 compressed buffer cannot be decoded"
+    @test sprint(Base.showerror, Blosc2DecodingError(0)) == "Blosc2DecodingError: blosc2 compressed buffer cannot be decoded, error code: 0"
     # check that a truncated buffer throws a Blosc2DecodingError
     u = zeros(UInt8, 8)
     c = encode(Blosc2EncodeOptions(), u)

@@ -1,9 +1,8 @@
 module ChunkCodecLibBlosc2
 
-using Base.Libc: free
 using Base.Threads
 
-using Accessors
+using Accessors: @reset
 
 using Blosc2_jll: libblosc2
 
@@ -22,7 +21,7 @@ import ChunkCodecCore:
                        try_find_decoded_size,
                        decoded_size_range
 
-export Blosc2Codec,
+export Blosc2CFrame,
        Blosc2EncodeOptions,
        Blosc2DecodeOptions,
        Blosc2DecodingError
@@ -38,8 +37,8 @@ export ChunkCodecCore, encode, decode
 include("libblosc2.jl")
 
 """
-    struct Blosc2Codec <: Codec
-    Blosc2Codec()
+    struct Blosc2CFrame <: Codec
+    Blosc2CFrame()
 
 Blosc2 compression using c-blosc2 library: https://github.com/Blosc2/c-blosc2
 
@@ -49,8 +48,8 @@ Decoding also does not accept truncated data, or multiple compressed blocks conc
 [`Blosc2EncodeOptions`](@ref) and [`Blosc2DecodeOptions`](@ref)
 can be used to set decoding and encoding options.
 """
-struct Blosc2Codec <: Codec end
-decode_options(::Blosc2Codec) = Blosc2DecodeOptions()
+struct Blosc2CFrame <: Codec end
+decode_options(::Blosc2CFrame) = Blosc2DecodeOptions()
 
 include("encode.jl")
 include("decode.jl")
