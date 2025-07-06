@@ -39,6 +39,9 @@ end
         for bits_per_pixel in bits
             for big_endian in (false, true)
                 c = SzipHDF5Codec(; options_mask=SZ_MSB_OPTION_MASK*big_endian, bits_per_pixel, pixels_per_block=32, pixels_per_scanline=128)
+                if isdefined(ChunkCodecCore, :is_lossless)
+                    @test !ChunkCodecCore.is_lossless(c)
+                end
                 # Important to not have unused bits set.
                 # Libaec does not enforce this for performance reasons 
                 # and will produce undefined output if unused bits are set.
