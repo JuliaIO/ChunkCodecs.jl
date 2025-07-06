@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v0.1.4](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecTests-v0.1.4) - 2025-07-06
+
+- Added the `is_lossless` trait. [#59](https://github.com/JuliaIO/ChunkCodecs.jl/pull/59)
+
 ## [v0.1.3](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecTests-v0.1.3) - 2025-05-23
 
 - Update to `ChunkCodecCore` 0.5 [#45](https://github.com/JuliaIO/ChunkCodecs.jl/pull/45)
