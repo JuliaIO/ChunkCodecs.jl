@@ -118,6 +118,13 @@ function SzipHDF5EncodeOptions(;
     )
 end
 
+if isdefined(ChunkCodecCore, :is_lossless)
+    function ChunkCodecCore.is_lossless(x::SzipHDF5Codec)
+        x.bits_per_pixel ∈ (8, 16, 32, 64)
+    end
+    ChunkCodecCore.is_lossless(e::SzipHDF5EncodeOptions) = ChunkCodecCore.is_lossless(e.codec)
+end
+
 decoded_size_range(e::SzipHDF5EncodeOptions) = decoded_size_range(e.codec)
 
 encode_bound(e::SzipHDF5EncodeOptions, src_size::Int64)::Int64 = encode_bound(e.codec, src_size)

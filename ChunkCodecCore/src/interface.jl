@@ -164,6 +164,13 @@ is_thread_safe(::DecodeOptions) = false
 is_thread_safe(c::Codec) = is_thread_safe(decode_options(c))
 
 """
+    is_lossless(e)::Bool
+
+Return `true` if the encoder is lossless.
+"""
+is_lossless(::Any) = true
+
+"""
     try_find_decoded_size(d, src::AbstractVector{UInt8})::Union{Nothing, Int64}
 
 Try to return the size of the decoded output of `src` using `d`.
