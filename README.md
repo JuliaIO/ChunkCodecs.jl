@@ -12,6 +12,7 @@ A consistent Julia interface for lossless encoding and decoding of bytes in memo
 |---|---|---|---|---|
 | Zstd | .zst RFC8878 | ChunkCodecLibZstd | ✅ | ✅ |
 | Zlib | RFC1950 | ChunkCodecLibZlib | ✅ | ✅ |
+| SzipHDF5 |  | ChunkCodecLibAec | ✅ | ✅ |
 | Snappy |  | ChunkCodecLibSnappy | ✅ | ✅ |
 | Shuffle |  | ChunkCodecCore | ✅ | ✅ |
 | Noop |  | ChunkCodecCore | ✅ | ✅ |
