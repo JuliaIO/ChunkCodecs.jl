@@ -1,6 +1,7 @@
 module ChunkCodecTests
 
 using ChunkCodecCore:
+    ChunkCodecCore,
     Codec,
     EncodeOptions,
     DecodeOptions,
@@ -49,6 +50,9 @@ end
 
 function test_encoder_decoder(e, d; trials=100)
     @test decoded_size_range(e) isa StepRange{Int64, Int64}
+    if isdefined(ChunkCodecCore, :is_lossless)
+        @test ChunkCodecCore.is_lossless(e) isa Bool
+    end
 
     srange = decoded_size_range(e)
     @test !isempty(srange)

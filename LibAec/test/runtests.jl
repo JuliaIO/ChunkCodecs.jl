@@ -7,7 +7,7 @@ using ChunkCodecLibAec:
     SzipDecodingError,
     SZ_MSB_OPTION_MASK,
     SZ_NN_OPTION_MASK
-using ChunkCodecCore: decode, encode
+using ChunkCodecCore: ChunkCodecCore, decode, encode
 using ChunkCodecTests: test_codec, test_encoder_decoder
 using Test: @testset, @test_throws, @test
 using Aqua: Aqua
@@ -22,6 +22,9 @@ Random.seed!(1234)
             for pixels_per_block in rand(2:2:32, 3)
                 for pixels_per_scanline in rand(1:128*pixels_per_block, 3)
                     c = SzipHDF5Codec(;options_mask, bits_per_pixel, pixels_per_block, pixels_per_scanline)
+                    if isdefined(ChunkCodecCore, :is_lossless)
+                        @test ChunkCodecCore.is_lossless(c)
+                    end
                     test_codec(c, SzipHDF5EncodeOptions(c), SzipHDF5DecodeOptions(c); trials=5)
                 end
             end
@@ -36,6 +39,9 @@ end
         for bits_per_pixel in bits
             for big_endian in (false, true)
                 c = SzipHDF5Codec(; options_mask=SZ_MSB_OPTION_MASK*big_endian, bits_per_pixel, pixels_per_block=32, pixels_per_scanline=128)
+                if isdefined(ChunkCodecCore, :is_lossless)
+                    @test !ChunkCodecCore.is_lossless(c)
+                end
                 # Important to not have unused bits set.
                 # Libaec does not enforce this for performance reasons 
                 # and will produce undefined output if unused bits are set.

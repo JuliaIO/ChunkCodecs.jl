@@ -30,6 +30,7 @@ Required methods for a type `T <: EncodeOptions` to implement:
 
 Optional methods to implement:
 - `is_thread_safe(::T)::Bool`: defaults to `false`.
+- `is_lossless(::T)::Bool`: defaults to `true`.
 """
 abstract type EncodeOptions end
 
