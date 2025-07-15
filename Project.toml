@@ -1,5 +1,6 @@
 [workspace]
 projects = [
+    "Bitshuffle",
     "ChunkCodecCore",
     "ChunkCodecTests",
     "LibAec",

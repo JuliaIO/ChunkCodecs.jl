@@ -28,6 +28,10 @@ jobs:
       id: filter
       with:
         filters: |
+          Bitshuffle:
+            - ChunkCodecCore/**
+            - ChunkCodecTests/**
+            - Bitshuffle/**
           ChunkCodecCore:
             - ChunkCodecCore/**
             - ChunkCodecTests/**

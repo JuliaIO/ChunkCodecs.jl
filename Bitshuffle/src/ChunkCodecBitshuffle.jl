@@ -2,6 +2,29 @@
 # There is a copy of the C library's license at the end of this file.
 module ChunkCodecBitshuffle
 
+using ChunkCodecCore:
+    Codec,
+    EncodeOptions,
+    DecodeOptions,
+    check_in_range,
+    check_contiguous,
+    DecodingError
+import ChunkCodecCore:
+    decode_options,
+    try_decode!,
+    try_encode!,
+    encode_bound,
+    try_find_decoded_size,
+    decoded_size_range
+
+export BitshuffleCodec,
+    BitshuffleEncodeOptions,
+    BitshuffleDecodeOptions
+
+# reexport ChunkCodecCore
+using ChunkCodecCore: ChunkCodecCore, encode, decode
+export ChunkCodecCore, encode, decode
+
 # constants
 const MIN_RECOMMEND_BLOCK = Int64(128)
 const BLOCKED_MULT = Int64(8)
@@ -25,7 +48,9 @@ function default_block_size(elem_size::Int64)::Int64
 end
 
 # Transpose 8x8 bit array packed into `x`
-# The most significant bit of x is the upper left corner of the matrix
+# The least significant bit of x is the upper left corner of the matrix
+# This is hierarchically transposing 2 by 2 block matrixes
+# by swapping the corners (a ⊻ b) .⊻ [a, b] == [b, a].
 function trans_bit_8x8(x::UInt64)::UInt64
     t = (x ⊻ (x >> 7)) & 0x00AA00AA00AA00AA
     x = x ⊻ t ⊻ (t << 7)
@@ -35,29 +60,21 @@ function trans_bit_8x8(x::UInt64)::UInt64
     x ⊻ t ⊻ (t << 28)
 end
 
-# # Transpose 8x8 bit array along the diagonal from upper right to lower left
-# # The most significant bit of x is the upper left corner of the matrix
-# function trans_bit_8x8_be(x::UInt64)::UInt64
-#     t = (x ⊻ (x >> 9)) & 0x0055005500550055
-#     x = x ⊻ t ⊻ (t << 9)
-#     t = (x ⊻ (x >> 18)) & 0x0000333300003333
-#     x = x ⊻ t ⊻ (t << 18)
-#     t = (x ⊻ (x >> 36)) & 0x000000000F0F0F0F
-#     x ⊻ t ⊻ (t << 36)
-# end
-
-function bitshuffle(in::AbstractVector{UInt8}, out::AbstractVector{UInt8}, elem_size::Int64, block_size::Int64)::Nothing
+function apply_blocks!(block_fun!, in::AbstractVector{UInt8}, out::AbstractVector{UInt8}, elem_size::Int64, _block_size::Int64)::Nothing
+    block_size = if iszero(_block_size)
+        default_block_size(elem_size)
+    else
+        _block_size
+    end
     in_nbytes::Int64 = length(in)
-    out_nbytes::Int64 = length(out)
-    @assert in_nbytes == out_nbytes
+    @assert in_nbytes ≤ length(out)
     @assert in_nbytes ≥ 0
-    @assert iszero(mod(in_nbytes, elem_size))
     @assert block_size > 0
     @assert elem_size > 0
     @assert iszero(mod(block_size, BLOCKED_MULT))
-    # split input into blocks of block_size elements
+    # split input into blocks of block_size elements and apply `block_fun!` transform.
     # The last block may be smaller, but still must have a size that is a multiple of BLOCKED_MULT (8)
-    # The leftover 0 to 7 elements are copied at the end if needed.
+    # The leftover bytes are copied at the end if needed.
     size = fld(in_nbytes, elem_size)
     size_left = size
     while size_left ≥ BLOCKED_MULT
@@ -65,11 +82,14 @@ function bitshuffle(in::AbstractVector{UInt8}, out::AbstractVector{UInt8}, elem_
             block_size = fld(size_left, BLOCKED_MULT) * BLOCKED_MULT
         end
         offset = (size-size_left)*elem_size
-        trans_bit_elem!(out, offset, in, offset, block_size, elem_size)
+        block_fun!(out, offset, in, offset, elem_size, block_size)
         size_left -= block_size
     end
     offset = (size-size_left)*elem_size
-    for i in 0:(size_left*elem_size-1)
+    left_over_bytes = in_nbytes - offset
+    # here we copy all leftover bytes, not just full elements
+    # This is incase https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
+    for i in 0:left_over_bytes-1
         out[begin + offset + i] = in[begin + offset + i]
     end
     nothing
@@ -78,19 +98,19 @@ end
 # Do the bit transpose on a block of `block_size` elements, with
 # each element having `elem_size` bytes.
 # `block_size` must be a multiple of 8
-function trans_bit_elem!(out, out_offset::Int64, in, in_offset::Int64, block_size::Int64, elem_size::Int64)
+function trans_bit_elem!(out, out_offset::Int64, in, in_offset::Int64, elem_size::Int64, block_size::Int64)
     # check preconditions
     @assert block_size > 0
     @assert elem_size > 0
     @assert iszero(mod(block_size, 8))
-    nbytes, f = Checked.mul_with_overflow(block_size, elem_size)
+    nbytes, f = Base.Checked.mul_with_overflow(block_size, elem_size)
     @assert !f
     checkbounds(out, firstindex(out) + out_offset)
     checkbounds(in, firstindex(in) + in_offset)
     checkbounds(out, firstindex(out) + out_offset + nbytes - 1)
     checkbounds(in, firstindex(in) + in_offset + nbytes - 1)
-    # This is not the fastest way to do this, and differs significantly from
-    # what is done in the C library.
+    # TODO try: https://mischasan.wordpress.com/2011/07/24/what-is-sse-good-for-transposing-a-bit-matrix/
+    # And other SIMD versions from the C library.
     M = fld(block_size, 8)
     for elem_group in 0:M-1
         for byte_in_elem in 0:elem_size-1
@@ -101,12 +121,141 @@ function trans_bit_elem!(out, out_offset::Int64, in, in_offset::Int64, block_siz
             # transpose the bits in x
             x = trans_bit_8x8(x)
             # now write back to the correct spots in out
-            for i in 1:8
-                out[begin + out_offset + (byte_in_elem*8+i-1)*M + elem_group] = (x >> (64-i*8)) % UInt8
+            for i in 0:7
+                out[begin + out_offset + (byte_in_elem*8+i)*M + elem_group] = (x >> (i*8)) % UInt8
             end
         end
     end
 end
+
+function untrans_bit_elem!(out, out_offset::Int64, in, in_offset::Int64, elem_size::Int64, block_size::Int64)
+    trans_bit_elem!(out, out_offset, in, in_offset, fld(block_size,8), elem_size*8)
+end
+
+const bitshuffle_docs = """
+Blocked bitwise shuffle. The element size and block size are required
+to be able to decode the shuffle.
+
+This is using the format used by the functions `bshuf_bitshuffle` and `bshuf_bitunshuffle` from https://www.github.com/kiyo-masui/bitshuffle
+
+This is HDF5 filter number 32008 when `cd_values[4]` is 0 for no compression.
+"""
+
+"""
+    struct BitshuffleCodec <: Codec
+    BitshuffleCodec(element_size::Integer, block_size::Integer)
+
+$bitshuffle_docs
+
+`block_size` can be zero to use an automatic size. This must be a multiple of 8.
+
+A `BitshuffleCodec` can be used as an encoder or decoder.
+"""
+struct BitshuffleCodec <: Codec
+    element_size::Int64
+    block_size::Int64
+    function BitshuffleCodec(element_size::Integer, block_size::Integer)
+        check_in_range(Int64(1):typemax(Int64); element_size)
+        check_in_range(Int64(0):Int64(8):typemax(Int64); block_size)
+        new(Int64(element_size), Int64(block_size))
+    end
+end
+
+decode_options(x::BitshuffleCodec) = BitshuffleDecodeOptions(;codec=x) # default decode options
+
+# Allow BitshuffleCodec to be used as an encoder
+# TODO relax this is if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
+decoded_size_range(e::BitshuffleCodec) = Int64(0):Int64(e.element_size):typemax(Int64)-Int64(1)
+
+encode_bound(::BitshuffleCodec, src_size::Int64)::Int64 = src_size
+
+function try_encode!(e::BitshuffleCodec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+    dst_size::Int64 = length(dst)
+    src_size::Int64 = length(src)
+    element_size = e.element_size
+    block_size = e.block_size
+    check_in_range(decoded_size_range(e); src_size)
+    if dst_size < src_size
+        nothing
+    else
+        apply_blocks!(trans_bit_elem!, src, dst, element_size, block_size)
+        return src_size
+    end
+end
+
+"""
+    struct BitshuffleEncodeOptions <: EncodeOptions
+    BitshuffleEncodeOptions(; kwargs...)
+
+$bitshuffle_docs
+
+# Keyword Arguments
+
+- `codec::BitshuffleCodec`
+"""
+struct BitshuffleEncodeOptions <: EncodeOptions
+    codec::BitshuffleCodec
+end
+function BitshuffleEncodeOptions(;
+        codec::BitshuffleCodec,
+        kwargs...
+    )
+    BitshuffleEncodeOptions(codec)
+end
+
+is_thread_safe(::BitshuffleEncodeOptions) = true
+
+decoded_size_range(x::BitshuffleEncodeOptions) = decoded_size_range(x.codec)
+
+encode_bound(x::BitshuffleEncodeOptions, src_size::Int64)::Int64 = encode_bound(x.codec, src_size)
+
+function try_encode!(x::BitshuffleEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+    try_encode!(x.codec, dst, src)
+end
+
+"""
+    struct BitshuffleDecodeOptions <: DecodeOptions
+    BitshuffleDecodeOptions(; kwargs...)
+
+$bitshuffle_docs
+
+# Keyword Arguments
+
+- `codec::BitshuffleCodec`
+"""
+struct BitshuffleDecodeOptions <: DecodeOptions
+    codec::BitshuffleCodec
+end
+function BitshuffleDecodeOptions(;
+        codec::BitshuffleCodec,
+        kwargs...
+    )
+    BitshuffleDecodeOptions(codec)
+end
+
+is_thread_safe(::BitshuffleDecodeOptions) = true
+
+function try_find_decoded_size(::BitshuffleDecodeOptions, src::AbstractVector{UInt8})::Int64
+    length(src)
+end
+
+function try_decode!(d::BitshuffleDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+    dst_size::Int64 = length(dst)
+    src_size::Int64 = length(src)
+    element_size = d.codec.element_size
+    block_size = if iszero(d.codec.block_size)
+        default_block_size(element_size)
+    else
+        d.codec.block_size
+    end
+    if dst_size < src_size
+        nothing
+    else
+        apply_blocks!(untrans_bit_elem!, src, dst, element_size, block_size)
+        return src_size
+    end
+end
+
 
 
 end # module ChunkCodecBitshuffle

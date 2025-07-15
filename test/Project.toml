@@ -2,6 +2,7 @@
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Blosc = "a74b3585-a348-5f62-a45c-50e91977d574"
+ChunkCodecBitshuffle = "1d859bbf-6282-4c80-a370-34c59bf7ec11"
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
 ChunkCodecLibAec = "50eb285c-f72d-40fd-bb37-8ab277ca8a2c"
 ChunkCodecLibBlosc = "c6a955be-ab7f-4fbb-b38f-caf93db6b928"
@@ -25,6 +26,7 @@ Supposition = "5a0628fe-1738-4658-9b6d-0b7605a9755b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [sources]
+ChunkCodecBitshuffle = {path = "../Bitshuffle"}
 ChunkCodecCore = {path = "../ChunkCodecCore"}
 ChunkCodecLibAec = {path = "../LibAec"}
 ChunkCodecLibBlosc = {path = "../LibBlosc"}

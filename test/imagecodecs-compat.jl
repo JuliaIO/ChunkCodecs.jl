@@ -1,5 +1,6 @@
 using PythonCall
 using
+    ChunkCodecBitshuffle,
     ChunkCodecLibAec,
     ChunkCodecLibBlosc,
     ChunkCodecLibBrotli,
@@ -13,6 +14,39 @@ using ChunkCodecTests: rand_test_data
 using Test
 
 codecs = [
+    (
+        ChunkCodecBitshuffle.BitshuffleEncodeOptions(codec=ChunkCodecBitshuffle.BitshuffleCodec(
+            1,
+            0,
+        )),
+        ("bitshuffle", (;
+            itemsize=1,
+            blocksize=0,
+        )),
+        300,
+    ),
+    (
+        ChunkCodecBitshuffle.BitshuffleEncodeOptions(codec=ChunkCodecBitshuffle.BitshuffleCodec(
+            8,
+            0,
+        )),
+        ("bitshuffle", (;
+            itemsize=8,
+            blocksize=0,
+        )),
+        300,
+    ),
+    (
+        ChunkCodecBitshuffle.BitshuffleEncodeOptions(codec=ChunkCodecBitshuffle.BitshuffleCodec(
+            8,
+            200,
+        )),
+        ("bitshuffle", (;
+            itemsize=8,
+            blocksize=200,
+        )),
+        300,
+    ),
     (
         ChunkCodecLibAec.SzipHDF5EncodeOptions(;codec=ChunkCodecLibAec.SzipHDF5Codec(;
             options_mask=Int32(0),
