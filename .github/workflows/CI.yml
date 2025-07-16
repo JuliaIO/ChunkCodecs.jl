@@ -74,7 +74,7 @@ jobs:
         # e.g. ['package1', 'package2'] if both package folders contains changes
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
         version:
-          - '1.10'
+          - 'min'
           - '1'
           - 'pre'
         os:
@@ -88,15 +88,15 @@ jobs:
           - os: macos-latest
             arch: 'x86'
           - os: macos-latest
-            version: '1.10'
+            version: 'min'
           - os: macos-latest
             version: 'pre'
           - os: windows-latest
-            version: '1.10'
+            version: 'min'
           - os: windows-latest
             version: 'pre'
           - os: ubuntu-latest
-            version: '1.10'
+            version: 'min'
             arch: 'x86'
     steps:
       - uses: actions/checkout@v4
