@@ -484,7 +484,11 @@ function try_decode!(d::LZ4HDF5DecodeOptions, dst::AbstractVector{UInt8}, src::A
                 throw(LZ4DecodingError("unexpected end of input"))
             end
             if c_size == b_size # There was no compression
-                Libc.memcpy(dst_p, src_p, b_size)
+                @static if VERSION ≥ v"1.10"
+                    Libc.memcpy(dst_p, src_p, b_size)
+                else
+                    unsafe_copyto!(dst_p, src_p, b_size)
+                end
             else # do the decompression
                 local ret = unsafe_lz4_decompress(src_p, dst_p, c_size, b_size)
                 if signbit(ret)
