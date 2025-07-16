@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- Added support for Julia 1.9 [#63](https://github.com/JuliaIO/ChunkCodecs.jl/pull/63)
+
 ## [v0.1.4](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecTests-v0.1.4) - 2025-07-06
 
 - Added the `is_lossless` trait. [#59](https://github.com/JuliaIO/ChunkCodecs.jl/pull/59)
