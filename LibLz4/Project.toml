@@ -10,7 +10,7 @@ Lz4_jll = "5ced341a-0733-55b8-9ab6-a4889d929147"
 [compat]
 ChunkCodecCore = "0.5"
 Lz4_jll = "1"
-julia = "1.7"
+julia = "1.9"
 
 [workspace]
 projects = ["test"]
