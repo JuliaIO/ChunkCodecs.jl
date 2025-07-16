@@ -81,7 +81,11 @@ function unsafe_MakeUncompressedStream(input::Ptr{UInt8}, input_size::Int64, out
             unsafe_store!(output + result, (bits >> 24)%UInt8)
             result += 1
         end
-        Libc.memcpy(output + result, input + offset, chunk_size)
+        @static if VERSION ≥ v"1.10"
+            Libc.memcpy(output + result, input + offset, chunk_size)
+        else
+            unsafe_copyto!(output + result, input + offset, chunk_size)
+        end
         result += chunk_size
         offset += chunk_size
         size -= chunk_size

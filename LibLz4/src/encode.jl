@@ -355,7 +355,11 @@ function try_encode!(e::LZ4HDF5EncodeOptions, dst::AbstractVector{UInt8}, src::A
                 if dst_left < b_size
                     return nothing
                 end
-                Libc.memcpy(dst_p, src_p, b_size)
+                @static if VERSION ≥ v"1.10"
+                    Libc.memcpy(dst_p, src_p, b_size)
+                else
+                    unsafe_copyto!(dst_p, src_p, b_size)
+                end
                 b_size
             else
                 ret
