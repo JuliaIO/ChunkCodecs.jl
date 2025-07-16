@@ -15,9 +15,12 @@ import ChunkCodecCore:
     try_encode!,
     encode_bound,
     try_find_decoded_size,
-    decoded_size_range
+    decoded_size_range,
+    is_thread_safe,
+    is_lossless
 
 export BitshuffleCodec,
+    BitshuffleDecodingError,
     BitshuffleEncodeOptions,
     BitshuffleDecodeOptions
 
@@ -29,6 +32,21 @@ export ChunkCodecCore, encode, decode
 const MIN_RECOMMEND_BLOCK = Int64(128)
 const BLOCKED_MULT = Int64(8)
 const TARGET_BLOCK_SIZE_B = Int64(8192)
+
+"""
+    BitshuffleDecodingError(msg)
+
+Error for data that cannot be decoded.
+"""
+struct BitshuffleDecodingError <: DecodingError
+    msg::String
+end
+
+function Base.showerror(io::IO, err::BitshuffleDecodingError)
+    print(io, "BitshuffleDecodingError: ")
+    print(io, err.msg)
+    nothing
+end
 
 """
     default_block_size(elem_size::Int64)::Int64
@@ -165,7 +183,7 @@ decode_options(x::BitshuffleCodec) = BitshuffleDecodeOptions(;codec=x) # default
 
 # Allow BitshuffleCodec to be used as an encoder
 # TODO relax this is if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
-decoded_size_range(e::BitshuffleCodec) = Int64(0):Int64(e.element_size):typemax(Int64)-Int64(1)
+decoded_size_range(e::BitshuffleCodec) = Int64(0):e.element_size:typemax(Int64)-1
 
 encode_bound(::BitshuffleCodec, src_size::Int64)::Int64 = src_size
 
@@ -253,114 +271,7 @@ function try_decode!(d::BitshuffleDecodeOptions, dst::AbstractVector{UInt8}, src
     end
 end
 
-const bitshufflecompress_docs = """
-Blocked bitwise shuffle with compression applied to each block. The element size and compress codec are required
-to be able to decode this.
-
-This is HDF5 filter number 32008 when `cd_values[4]` is set for compression.
-
-`cd_values[4]` with value `2` or `BSHUF_H5_COMPRESS_LZ4` corresponds to `LZ4Block` from `ChunkCodecLibLz4`.
-
-`cd_values[4]` with value `3` or `BSHUF_H5_COMPRESS_ZSTD` corresponds to `Zstd` from `ChunkCodecLibZstd`.
-"""
-
-"""
-    struct BitshuffleCompressCodec{C<:Codec} <: Codec
-    BitshuffleCompressCodec(element_size::Integer, compress::Codec)
-
-$bitshufflecompress_docs
-
-"""
-struct BitshuffleCompressCodec{C<:Codec} <: Codec
-    element_size::Int64
-    compress::C
-    function BitshuffleCompressCodec{C}(element_size::Integer, compress::Codec) where C<:Codec
-        check_in_range(Int64(1):typemax(Int64); element_size)
-        new{C}(Int64(element_size), Int64(block_size), convert(C, compress))
-    end
-end
-BitshuffleCompressCodec(element_size::Integer, compress::Codec) = BitshuffleCompressCodec{typeof(compress)}(element_size, compress)
-
-decode_options(x::BitshuffleCompressCodec) = BitshuffleCompressOptions(;codec=x) # default decode options
-
-"""
-    struct BitshuffleCompressEncodeOptions <: EncodeOptions
-    BitshuffleCompressEncodeOptions(; kwargs...)
-
-$bitshufflecompress_docs
-
-# Keyword Arguments
-
-- `codec::BitshuffleCompressCodec`
-- `options::EncodeOptions`: block encoding options.
-- `block_size`
-"""
-struct BitshuffleCompressEncodeOptions{C<:Codec, E<:EncodeOptions} <: EncodeOptions
-    codec::BitshuffleCompressCodec{C}
-    options::E
-end
-function BitshuffleCompressEncodeOptions(;
-        codec::BitshuffleCompressCodec{C},
-        options::E,
-        kwargs...
-    ) where {C, E<:EncodeOptions}
-    if !isequal(options.codec, codec.compress)
-        throw(ArgumentError("`codec.compress` must match `options.codec`. Got\n`codec.compress` => $(codec.compress)\n`options.codec` => $(options.codec)"))
-    end
-    BitshuffleCompressEncodeOptions{C, E}(codec, options)
-end
-
-is_thread_safe(x::BitshuffleCompressEncodeOptions) = is_thread_safe(x.options)
-
-function decoded_size_range(x::BitshuffleEncodeOptions)
-    decoded_size_range(x.codec)
-
-encode_bound(x::BitshuffleEncodeOptions, src_size::Int64)::Int64 = encode_bound(x.codec, src_size)
-
-function try_encode!(x::BitshuffleEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
-    try_encode!(x.codec, dst, src)
-end
-
-"""
-    struct BitshuffleDecodeOptions <: DecodeOptions
-    BitshuffleDecodeOptions(; kwargs...)
-
-$bitshuffle_docs
-
-# Keyword Arguments
-
-- `codec::BitshuffleCodec`
-"""
-struct BitshuffleDecodeOptions <: DecodeOptions
-    codec::BitshuffleCodec
-end
-function BitshuffleDecodeOptions(;
-        codec::BitshuffleCodec,
-        kwargs...
-    )
-    BitshuffleDecodeOptions(codec)
-end
-
-is_thread_safe(::BitshuffleDecodeOptions) = true
-
-function try_find_decoded_size(::BitshuffleDecodeOptions, src::AbstractVector{UInt8})::Int64
-    length(src)
-end
-
-function try_decode!(d::BitshuffleDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
-    dst_size::Int64 = length(dst)
-    src_size::Int64 = length(src)
-    element_size = d.codec.element_size
-    block_size = d.codec.block_size
-    # TODO add a error if src_size isn't a multiple of element_size to match current HDF5 behavior. Ref: https://github.com/kiyo-masui/bitshuffle/issues/3
-    if dst_size < src_size
-        nothing
-    else
-        apply_blocks!(untrans_bit_elem!, src, dst, element_size, block_size)
-        return src_size
-    end
-end
-
+include("compress.jl")
 
 end # module ChunkCodecBitshuffle
 
