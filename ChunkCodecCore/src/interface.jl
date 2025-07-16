@@ -114,9 +114,6 @@ can_concatenate(::Codec) = false
 
 Return the range of allowed `src` sizes for encoding.
 
-[`encode_bound`](@ref) on any value in the returned range must be in
-`0:typemax(Int64)-1`.
-
 See also [`encode_bound`](@ref)
 """
 function decoded_size_range end

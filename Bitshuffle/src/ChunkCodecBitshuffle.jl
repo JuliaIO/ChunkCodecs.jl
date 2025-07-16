@@ -19,10 +19,13 @@ import ChunkCodecCore:
     is_thread_safe,
     is_lossless
 
-export BitshuffleCodec,
-    BitshuffleDecodingError,
+export BitshuffleDecodingError,
+    BitshuffleCodec,
     BitshuffleEncodeOptions,
-    BitshuffleDecodeOptions
+    BitshuffleDecodeOptions,
+    BitshuffleCompressCodec,
+    BitshuffleCompressEncodeOptions,
+    BitshuffleCompressDecodeOptions
 
 # reexport ChunkCodecCore
 using ChunkCodecCore: ChunkCodecCore, encode, decode

@@ -5,9 +5,14 @@ using ChunkCodecBitshuffle:
     untrans_bit_elem!,
     BitshuffleCodec,
     BitshuffleEncodeOptions,
-    BitshuffleDecodeOptions
+    BitshuffleDecodeOptions,
+    BitshuffleCompressCodec,
+    BitshuffleCompressEncodeOptions,
+    BitshuffleCompressDecodeOptions
 using ChunkCodecCore: ChunkCodecCore, decode, encode
 using ChunkCodecTests: test_codec, test_encoder_decoder
+using ChunkCodecLibLz4
+using ChunkCodecLibZstd
 using Test: @testset, @test_throws, @test
 using Aqua: Aqua
 using bitshuffle_jll: libbitshuffle
@@ -74,8 +79,8 @@ end
             c = BitshuffleCodec(element_size, block_size)
             test_codec(
                 c,
-                BitshuffleEncodeOptions(c),
-                BitshuffleDecodeOptions(c);
+                BitshuffleEncodeOptions(;codec= c),
+                BitshuffleDecodeOptions(;codec= c);
                 trials=10,
             )
         end
@@ -89,4 +94,19 @@ end
     @test_throws ArgumentError BitshuffleCodec(typemin(Int64), 0)
     # non multiple of 8 block_size should error
     @test_throws ArgumentError BitshuffleCodec(1, 3)
+end
+@testset "bitshuffle compress codec" begin
+    for element_size in [1:9; 256; 513;]
+        for block_size in [0; 8; 24; 2^20;]
+            # zero is default
+            c = BitshuffleCompressCodec(element_size, LZ4BlockCodec())
+            # @show c
+            test_codec(
+                c,
+                BitshuffleCompressEncodeOptions(;codec= c, options= LZ4BlockEncodeOptions(), block_size),
+                BitshuffleCompressDecodeOptions(;codec= c);
+                trials=10,
+            )
+        end
+    end
 end
