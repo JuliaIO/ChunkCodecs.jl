@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-- Added support for Julia 1.9 [#63](https://github.com/JuliaIO/ChunkCodecs.jl/pull/63)
+- Added support for Julia 1.7 [#63](https://github.com/JuliaIO/ChunkCodecs.jl/pull/63)
 
 ## [v0.2.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibSnappy-v0.2.0) - 2025-05-23
 
