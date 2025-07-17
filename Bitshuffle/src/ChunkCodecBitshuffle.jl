@@ -185,7 +185,7 @@ end
 decode_options(x::BitshuffleCodec) = BitshuffleDecodeOptions(;codec=x) # default decode options
 
 # Allow BitshuffleCodec to be used as an encoder
-# TODO relax this is if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
+# TODO relax this if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
 decoded_size_range(e::BitshuffleCodec) = Int64(0):e.element_size:typemax(Int64)-1
 
 encode_bound(::BitshuffleCodec, src_size::Int64)::Int64 = src_size

@@ -7,6 +7,8 @@ This is HDF5 filter number 32008 when `cd_values[4]` is set for compression.
 `cd_values[4]` with value `2` or `BSHUF_H5_COMPRESS_LZ4` corresponds to `LZ4BlockCodec` from `ChunkCodecLibLz4`.
 
 `cd_values[4]` with value `3` or `BSHUF_H5_COMPRESS_ZSTD` corresponds to `ZstdCodec` from `ChunkCodecLibZstd`.
+
+The element size can be at most `fld(typemax(Int32), 8)`.
 """
 
 """
@@ -20,7 +22,7 @@ struct BitshuffleCompressCodec{C<:Codec} <: Codec
     element_size::Int64
     compress::C
     function BitshuffleCompressCodec{C}(element_size::Integer, compress::Codec) where C<:Codec
-        check_in_range(Int64(1):fld(typemax(Int32),8); element_size)
+        check_in_range(Int64(1):fld(typemax(Int32), 8); element_size)
         new{C}(Int64(element_size), convert(C, compress))
     end
 end
@@ -92,7 +94,7 @@ is_thread_safe(e::BitshuffleCompressEncodeOptions) = is_thread_safe(e.options)
 
 is_lossless(e::BitshuffleCompressEncodeOptions) = is_lossless(e.options)
 
-# TODO relax this is if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
+# TODO relax this if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
 function decoded_size_range(e::BitshuffleCompressEncodeOptions)
     Int64(0):e.codec.element_size:typemax(Int64)-1
 end

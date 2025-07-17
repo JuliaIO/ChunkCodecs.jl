@@ -9,7 +9,14 @@ using ChunkCodecBitshuffle:
     BitshuffleCompressCodec,
     BitshuffleCompressEncodeOptions,
     BitshuffleCompressDecodeOptions
-using ChunkCodecCore: ChunkCodecCore, decode, encode
+using ChunkCodecCore:
+    ChunkCodecCore,
+    decode,
+    encode,
+    Codec,
+    EncodeOptions,
+    DecodeOptions,
+    NoopCodec
 using ChunkCodecTests: test_codec, test_encoder_decoder
 using ChunkCodecLibLz4
 using ChunkCodecLibZstd
@@ -18,8 +25,6 @@ using Aqua: Aqua
 using bitshuffle_jll: libbitshuffle
 
 Aqua.test_all(ChunkCodecBitshuffle; persistent_tasks = false)
-
-Random.seed!(1234)
 
 # helper functions
 # Take a matrix of UInt8, and create a BitMatrix
@@ -52,6 +57,34 @@ function bitshuffle_lib(in, elem_size)
     ret == length(in) || error("$(ret) returned from bshuf_bitshuffle expected $(length(in))")
     out
 end
+
+# version of NoopEncodeOptions that has an element size restriction
+# Used to test strange edge case where encoder can encode full blocks but cannot encode partial blocks.
+struct TestNoopEncodeOptions <: ChunkCodecCore.EncodeOptions
+    codec::NoopCodec
+    element_size::Int64
+end
+function TestNoopEncodeOptions(;
+        codec::NoopCodec= NoopCodec(),
+        element_size::Integer= 1,
+        kwargs...
+    )
+    TestNoopEncodeOptions(codec, element_size)
+end
+ChunkCodecCore.encode_bound(::TestNoopEncodeOptions, src_size::Int64)::Int64 = src_size
+ChunkCodecCore.decoded_size_range(e::TestNoopEncodeOptions) = Int64(8):e.element_size:typemax(Int64)-Int64(1)
+function ChunkCodecCore.try_encode!(e::TestNoopEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+    dst_size::Int64 = length(dst)
+    src_size::Int64 = length(src)
+    check_in_range(decoded_size_range(e); src_size)
+    if dst_size < src_size
+        nothing
+    else
+        copyto!(dst, src)
+        src_size
+    end
+end
+
 
 @testset "trans_bit_elem! unit tests" begin
     for elem_size in Int64(1):Int64(50)
@@ -95,6 +128,13 @@ end
     # non multiple of 8 block_size should error
     @test_throws ArgumentError BitshuffleCodec(1, 3)
 end
+@testset "non multiple of element size" begin
+    c = BitshuffleCodec(5, 0)
+    # TODO relax this is if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
+    @test_throws ArgumentError encode(c, zeros(UInt8, 42))
+    # decode will copy leftover bytes at the end for future bitshuffle compatibility.
+    @test decode(c, [ones(UInt8, 40); 0x12; 0x34;]) == [fill(0xFF, 5); zeros(UInt8, 35); 0x12; 0x34;]
+end
 @testset "bitshuffle compress codec" begin
     for element_size in [1:9; 256; 513;]
         for block_size in [0; 8; 24; 2^20;]
@@ -109,4 +149,67 @@ end
             )
         end
     end
+    c = BitshuffleCompressCodec(5, ZstdCodec())
+    test_codec(
+        c,
+        BitshuffleCompressEncodeOptions(;codec= c, options= ZstdEncodeOptions()),
+        BitshuffleCompressDecodeOptions(;codec= c);
+        trials=10,
+    )
+end
+@testset "non multiple of element size compress" begin
+    e_opt = BitshuffleCompressEncodeOptions(;codec=BitshuffleCompressCodec(5, LZ4BlockCodec()), options=LZ4BlockEncodeOptions())
+    # TODO relax this if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
+    @test_throws ArgumentError encode(e_opt, zeros(UInt8, 42))
+    # decode will copy leftover bytes at the end for future bitshuffle compatibility.
+    e = encode(e_opt, ones(UInt8, 40))
+    # patch the decoded size
+    e[8] = 42
+    @test decode(e_opt.codec, [e; 0x12; 0x34;]) == [ones(UInt8, 40); 0x12; 0x34;]
+end
+@testset "BitshuffleCompress constructors" begin
+    BCC = BitshuffleCompressCodec
+    BCE = BitshuffleCompressEncodeOptions
+    BCD = BitshuffleCompressDecodeOptions
+    @test_throws ArgumentError BCC(0, LZ4BlockCodec())
+    @test_throws ArgumentError BCC(-1, LZ4BlockCodec())
+    @test_throws ArgumentError BCC(fld(typemax(Int32),8) + 1, LZ4BlockCodec())
+    @test_throws MethodError BCC(1, 1)
+    @test_throws MethodError BCC{Codec}(1, 1)
+    @test_throws MethodError BCC{ZstdCodec}(1, LZ4BlockCodec())
+    a = BCC(1, LZ4BlockCodec())
+    b = BCC{LZ4BlockCodec}(1, LZ4BlockCodec())
+    c = BCC{Codec}(1, LZ4BlockCodec())
+    @test a === b
+    @test a !== c
+
+    # Encode options
+    @test_throws MethodError BCE(;codec= ZstdCodec(), options= ZstdEncodeOptions())
+    @test_throws ArgumentError BCE(;codec= BCC(1, ZstdCodec()), options= LZ4BlockEncodeOptions())
+    @test_throws MethodError BCE{ZstdCodec, ZstdEncodeOptions}(;codec= BCC(1, LZ4BlockCodec()), options= LZ4BlockEncodeOptions())
+    @test_throws ArgumentError BCE{Codec, EncodeOptions}(;codec= BCC(1, ZstdCodec()), options= LZ4BlockEncodeOptions())
+    a = BCE(;codec= BCC(1, ZstdCodec()), options= ZstdEncodeOptions())
+    b = BCE{ZstdCodec, ZstdEncodeOptions}(;codec= BCC(1, ZstdCodec()), options= ZstdEncodeOptions())
+    c = BCE{Codec, ZstdEncodeOptions}(;codec= BCC{Codec}(1, ZstdCodec()), options= ZstdEncodeOptions())
+    d = BCE{ZstdCodec, EncodeOptions}(;codec= BCC(1, ZstdCodec()), options= ZstdEncodeOptions())
+    e = BCE{Codec, EncodeOptions}(;codec= BCC{Codec}(1, ZstdCodec()), options= ZstdEncodeOptions())
+    @test typeof(a) == typeof(b)
+    @test allunique(typeof.([b, c, d, e]))
+
+    @test_throws ArgumentError BCE(;codec= BCC(1, ZstdCodec()), options= ZstdEncodeOptions(), block_size=Int64(2)^31)
+    @test_throws ArgumentError BCE(;codec= BCC(1, ZstdCodec()), options= ZstdEncodeOptions(), block_size=9)
+    @test_throws ArgumentError BCE(;codec= BCC(1, ZstdCodec()), options= ZstdEncodeOptions(), block_size=-1)
+
+    # max block compressed and uncompressed bytes must be less than typemax(Int32)
+    @test_throws ArgumentError BCE(;codec= BCC(8, ZstdCodec()), options= ZstdEncodeOptions(), block_size=2147483640)
+    @test_throws ArgumentError BCE(;codec= BCC(268435455, ZstdCodec()), options= ZstdEncodeOptions(), block_size=16)
+    @test_throws ArgumentError BCE(;codec= BCC(268435455, ZstdCodec()), options= ZstdEncodeOptions(), block_size=8)
+    BCE(;codec= BCC(258435455, ZstdCodec()), options= ZstdEncodeOptions(), block_size=8)
+    @test_throws ArgumentError BCE(;codec= BCC(268435455, LZ4BlockCodec()), options= LZ4BlockEncodeOptions(), block_size=8)
+    @test_throws ArgumentError BCE(;codec= BCC(134217727, LZ4BlockCodec()), options= LZ4BlockEncodeOptions(), block_size=16)
+
+    # Test strange edge case where encoder can encode full blocks but cannot encode partial blocks.
+    BCE(;codec= BCC(1, NoopCodec()), options= TestNoopEncodeOptions(), block_size=32)
+    @test_throws ArgumentError BCE(;codec= BCC(1, NoopCodec()), options= TestNoopEncodeOptions(element_size=24), block_size=32)
+
 end
