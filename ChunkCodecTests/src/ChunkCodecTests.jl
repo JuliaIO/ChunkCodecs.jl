@@ -57,7 +57,7 @@ function test_encoder_decoder(e, d; trials=100)
     @test step(srange) > 0
     @test first(srange) ≥ 0
     @test last(srange) != typemax(Int64) # avoid length overflow
-    # typemax(Int64) is reserved for overflow
+    # typemax(Int64) is reserved for saturation
     @test encode_bound(e, typemax(Int64)) == typemax(Int64)
 
     for s in [first(srange):step(srange):min(last(srange), 1000); rand(srange, 10000); last(srange); typemax(Int64)-1; typemax(Int64);]
