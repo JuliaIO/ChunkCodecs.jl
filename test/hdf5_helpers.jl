@@ -7,6 +7,7 @@ using
     ChunkCodecLibLz4,
     ChunkCodecLibZlib,
     ChunkCodecLibAec,
+    ChunkCodecBitshuffle,
     ChunkCodecCore
 using ChunkCodecTests: rand_test_data
 using Test
@@ -15,6 +16,7 @@ import CodecBzip2
 import Blosc
 import CodecZstd
 import CodecLz4
+import bitshuffle_jll
 
 using PythonCall
 hdf5plugin = pyimport("hdf5plugin")

@@ -24,6 +24,7 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 Supposition = "5a0628fe-1738-4658-9b6d-0b7605a9755b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+bitshuffle_jll = "228fe19c-1b83-5282-a626-13744502a320"
 
 [sources]
 ChunkCodecBitshuffle = {path = "../Bitshuffle"}
