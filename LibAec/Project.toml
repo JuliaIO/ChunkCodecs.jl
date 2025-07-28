@@ -1,7 +1,7 @@
 name = "ChunkCodecLibAec"
 uuid = "50eb285c-f72d-40fd-bb37-8ab277ca8a2c"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
