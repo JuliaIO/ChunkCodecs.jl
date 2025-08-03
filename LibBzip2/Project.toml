@@ -1,7 +1,7 @@
 name = "ChunkCodecLibBzip2"
 uuid = "2b723af9-f480-4e8d-a1e4-4a9f5a906122"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Bzip2_jll = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
