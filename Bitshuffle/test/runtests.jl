@@ -1,4 +1,3 @@
-using Random: Random
 using ChunkCodecBitshuffle:
     ChunkCodecBitshuffle,
     trans_bit_elem!,

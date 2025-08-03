@@ -8,4 +8,19 @@ ported from the libbitshuffle C library <https://github.com/kiyo-masui/bitshuffl
 1. `BShufCodec`, `BShufEncodeOptions`, `BShufDecodeOptions`
 1. `BShufZCodec`, `BShufZEncodeOptions`, `BShufZDecodeOptions`
 
+## Example
+
+```julia-repl
+julia> using ChunkCodecBitshuffle
+
+julia> data = collect(0x00:0xFF);
+
+julia> compressed_data = encode(BShufCodec(2, 0), data);
+
+julia> decompressed_data = decode(BShufCodec(2, 0), compressed_data; max_size=length(data), size_hint=length(data));
+
+julia> data == decompressed_data
+true
+```
+
 The low level interface is defined in the `ChunkCodecCore` package.
