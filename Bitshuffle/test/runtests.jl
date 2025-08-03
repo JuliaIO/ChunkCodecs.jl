@@ -98,8 +98,8 @@ end
             trans_bit_elem!(trans, Int64(0), og, Int64(0), elem_size, block_size)
             @test og == og_copy
             @test trans == bitshuffle_lib(og, elem_size)
-            bm_og = make_bitmatrix(reshape(og, elem_size, :))
-            bm_trans = make_bitmatrix(reshape(trans, fld(block_size, 8), :))
+            bm_og = make_bitmatrix(reshape(og, Int(elem_size), :))
+            bm_trans = make_bitmatrix(reshape(trans, Int(fld(block_size, 8)), :))
             @test bm_og == transpose(bm_trans)
             untrans = similar(og)
             untrans_bit_elem!(untrans, Int64(0), trans, Int64(0), elem_size, block_size)
