@@ -120,31 +120,6 @@ function encode_bound(e::BShufZEncodeOptions, src_size::Int64)::Int64
     bound
 end
 
-function store_int32_BE!(dst, offset, val::Int32)
-    for i in 0:3
-        dst[begin+offset+i] = (val>>>(3*8 - i*8))%UInt8
-    end
-end
-function store_int64_BE!(dst, offset, val::Int64)
-    for i in 0:7
-        dst[begin+offset+i] = (val>>>(7*8 - i*8))%UInt8
-    end
-end
-function load_int32_BE(src, offset)::Int32
-    val = Int32(0)
-    for i in 0:3
-        val |= Int32(src[begin+offset+i])<<(3*8 - i*8)
-    end
-    val
-end
-function load_int64_BE(src, offset)::Int64
-    val = Int64(0)
-    for i in 0:7
-        val |= Int64(src[begin+offset+i])<<(7*8 - i*8)
-    end
-    val
-end
-
 function try_encode!(e::BShufZEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
     check_contiguous(dst)
     check_contiguous(src)

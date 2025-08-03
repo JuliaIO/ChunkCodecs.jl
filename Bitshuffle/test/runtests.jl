@@ -90,7 +90,7 @@ end
 
 @testset "trans_bit_elem! unit tests" begin
     for elem_size in Int64(1):Int64(50)
-        for block_size in 8:8:400
+        for block_size in Int64(8):Int64(8):Int64(400)
             @assert iszero(mod(block_size, 8))
             og = rand(UInt8, block_size*elem_size)
             og_copy = copy(og)
@@ -108,7 +108,7 @@ end
     end
 end
 @testset "bitshuffle codec" begin
-    for element_size in [1:9; 256; 513;]
+    for element_size in [1:4; 8; 256; 513;]
         for block_size in [0; 8; 24; 2^32;]
             # zero is default
             c = BShufCodec(element_size, block_size)
@@ -137,7 +137,7 @@ end
     @test_throws BShufDecodingError("src_size isn't a multiple of element_size") decode(c, ones(UInt8, 42))
 end
 @testset "bitshuffle compress codec" begin
-    for element_size in [1:4; 8; 256; 513;]
+    for element_size in [1; 8; 256; 513;]
         for block_size in [0; 8; 24; 2^20;]
             # zero is default
             c = BShufZCodec(element_size, ZstdCodec())
@@ -236,6 +236,8 @@ end
     end
 end
 @testset "BShufZ errors" begin
+    @test sprint(Base.showerror, BShufDecodingError("foo")) ==
+        "BShufDecodingError: foo"
     codec=BShufZCodec(1, ZstdCodec())
     e = BShufZEncodeOptions(;
         codec,

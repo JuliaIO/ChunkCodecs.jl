@@ -51,6 +51,31 @@ function Base.showerror(io::IO, err::BShufDecodingError)
     nothing
 end
 
+function store_int32_BE!(dst, offset, val::Int32)
+    for i in 0:3
+        dst[begin+offset+i] = (val>>>(3*8 - i*8))%UInt8
+    end
+end
+function store_int64_BE!(dst, offset, val::Int64)
+    for i in 0:7
+        dst[begin+offset+i] = (val>>>(7*8 - i*8))%UInt8
+    end
+end
+function load_int32_BE(src, offset)::Int32
+    val = Int32(0)
+    for i in 0:3
+        val |= Int32(src[begin+offset+i])<<(3*8 - i*8)
+    end
+    val
+end
+function load_int64_BE(src, offset)::Int64
+    val = Int64(0)
+    for i in 0:7
+        val |= Int64(src[begin+offset+i])<<(7*8 - i*8)
+    end
+    val
+end
+
 """
     default_block_size(elem_size::Int64)::Int64
 
@@ -136,9 +161,10 @@ function trans_bit_elem!(out, out_offset::Int64, in, in_offset::Int64, elem_size
     for elem_group in 0:M-1
         for byte_in_elem in 0:elem_size-1
             # load the 8 bytes into an UInt64
-            x = htol(reinterpret(UInt64, ntuple(8) do i
-                in[begin + in_offset + (elem_group*8+i-1)*elem_size + byte_in_elem]
-            end))
+            local x::UInt64 = 0
+            for i in 0:7
+                x |= UInt64(in[begin + in_offset + (elem_group*8+i)*elem_size + byte_in_elem])<<(i*8)
+            end
             # transpose the bits in x
             x = trans_bit_8x8(x)
             # now write back to the correct spots in out
