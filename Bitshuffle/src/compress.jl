@@ -12,43 +12,43 @@ The element size can be at most `fld(typemax(Int32), 8)`.
 """
 
 """
-    struct BitshuffleCompressCodec{C<:Codec} <: Codec
-    BitshuffleCompressCodec(element_size::Integer, compress::Codec)
+    struct BShufZCodec{C<:Codec} <: Codec
+    BShufZCodec(element_size::Integer, compress::Codec)
 
 $bitshufflecompress_docs
 
 """
-struct BitshuffleCompressCodec{C<:Codec} <: Codec
+struct BShufZCodec{C<:Codec} <: Codec
     element_size::Int64
     compress::C
-    function BitshuffleCompressCodec{C}(element_size::Integer, compress::Codec) where C<:Codec
+    function BShufZCodec{C}(element_size::Integer, compress::Codec) where C<:Codec
         check_in_range(Int64(1):fld(typemax(Int32), 8); element_size)
         new{C}(Int64(element_size), convert(C, compress))
     end
 end
-BitshuffleCompressCodec(element_size::Integer, compress::Codec) = BitshuffleCompressCodec{typeof(compress)}(element_size, compress)
+BShufZCodec(element_size::Integer, compress::Codec) = BShufZCodec{typeof(compress)}(element_size, compress)
 
-decode_options(x::BitshuffleCompressCodec) = BitshuffleCompressDecodeOptions(;codec=x) # default decode options
+decode_options(x::BShufZCodec) = BShufZDecodeOptions(;codec=x) # default decode options
 
 """
-    struct BitshuffleCompressEncodeOptions <: EncodeOptions
-    BitshuffleCompressEncodeOptions(; kwargs...)
+    struct BShufZEncodeOptions <: EncodeOptions
+    BShufZEncodeOptions(; kwargs...)
 
 $bitshufflecompress_docs
 
 # Keyword Arguments
 
-- `codec::BitshuffleCompressCodec`
+- `codec::BShufZCodec`
 - `options::EncodeOptions`: block encoding options.
 - `block_size::Integer=0`: Must be a multiple of 8. zero can be used for an automatic block size. This a number of elements not a number of bytes.
 """
-struct BitshuffleCompressEncodeOptions{C<:Codec, E<:EncodeOptions} <: EncodeOptions
-    codec::BitshuffleCompressCodec{C}
+struct BShufZEncodeOptions{C<:Codec, E<:EncodeOptions} <: EncodeOptions
+    codec::BShufZCodec{C}
     options::E
     block_size::Int64
 end
-function BitshuffleCompressEncodeOptions{C, E}(;
-        codec::BitshuffleCompressCodec,
+function BShufZEncodeOptions{C, E}(;
+        codec::BShufZCodec,
         options::EncodeOptions,
         block_size::Integer=Int64(0),
         kwargs...
@@ -80,26 +80,25 @@ function BitshuffleCompressEncodeOptions{C, E}(;
     if max_compressed_block_bytes > typemax(Int32)
         throw(ArgumentError("`options` not able to encode max block size in `typemax(Int32)` bytes."))
     end
-    BitshuffleCompressEncodeOptions{C, E}(codec, options, Int64(block_size))
+    BShufZEncodeOptions{C, E}(codec, options, Int64(block_size))
 end
-function BitshuffleCompressEncodeOptions(;
-        codec::BitshuffleCompressCodec{C},
+function BShufZEncodeOptions(;
+        codec::BShufZCodec{C},
         options::E,
         kwargs...
     ) where {C<:Codec, E<:EncodeOptions}
-    BitshuffleCompressEncodeOptions{C, E}(; codec, options, kwargs...)
+    BShufZEncodeOptions{C, E}(; codec, options, kwargs...)
 end
 
-is_thread_safe(e::BitshuffleCompressEncodeOptions) = is_thread_safe(e.options)
+is_thread_safe(e::BShufZEncodeOptions) = is_thread_safe(e.options)
 
-is_lossless(e::BitshuffleCompressEncodeOptions) = is_lossless(e.options)
+is_lossless(e::BShufZEncodeOptions) = is_lossless(e.options)
 
-# TODO relax this if https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
-function decoded_size_range(e::BitshuffleCompressEncodeOptions)
+function decoded_size_range(e::BShufZEncodeOptions)
     Int64(0):e.codec.element_size:typemax(Int64)-1
 end
 
-function encode_bound(e::BitshuffleCompressEncodeOptions, src_size::Int64)::Int64
+function encode_bound(e::BShufZEncodeOptions, src_size::Int64)::Int64
     elem_size = e.codec.element_size
     max_block_size = if iszero(e.block_size)
         default_block_size(elem_size)
@@ -146,7 +145,7 @@ function load_int64_BE(src, offset)::Int64
     val
 end
 
-function try_encode!(e::BitshuffleCompressEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BShufZEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -219,54 +218,56 @@ function try_encode!(e::BitshuffleCompressEncodeOptions, dst::AbstractVector{UIn
 end
 
 """
-    struct BitshuffleCompressDecodeOptions <: DecodeOptions
-    BitshuffleCompressDecodeOptions(; kwargs...)
+    struct BShufZDecodeOptions <: DecodeOptions
+    BShufZDecodeOptions(; kwargs...)
 
 $bitshufflecompress_docs
 
 # Keyword Arguments
 
-- `codec::BitshuffleCompressCodec`
+- `codec::BShufZCodec`
 - `options::DecodeOptions= decode_options(codec.compress)`: block decoding options.
 """
-struct BitshuffleCompressDecodeOptions{C<:Codec, D<:DecodeOptions} <: DecodeOptions
-    codec::BitshuffleCompressCodec{C}
+struct BShufZDecodeOptions{C<:Codec, D<:DecodeOptions} <: DecodeOptions
+    codec::BShufZCodec{C}
     options::D
 end
-function BitshuffleCompressDecodeOptions{C, D}(;
-        codec::BitshuffleCompressCodec,
+function BShufZDecodeOptions{C, D}(;
+        codec::BShufZCodec,
         options::DecodeOptions= decode_options(codec.compress),
         kwargs...
     ) where {C<:Codec, D<:DecodeOptions}
     if !isequal(options.codec, codec.compress)
         throw(ArgumentError("`codec.compress` must match `options.codec`. Got\n`codec.compress` => $(codec.compress)\n`options.codec` => $(options.codec)"))
     end
-    BitshuffleCompressDecodeOptions{C, D}(codec, options)
+    BShufZDecodeOptions{C, D}(codec, options)
 end
-function BitshuffleCompressDecodeOptions(;
-        codec::BitshuffleCompressCodec{C},
+function BShufZDecodeOptions(;
+        codec::BShufZCodec{C},
         options::D= decode_options(codec.compress),
         kwargs...
     ) where {C<:Codec, D<:DecodeOptions}
-    BitshuffleCompressDecodeOptions{C, D}(;codec, options, kwargs...)
+    BShufZDecodeOptions{C, D}(;codec, options, kwargs...)
 end
 
-is_thread_safe(d::BitshuffleCompressDecodeOptions) = is_thread_safe(d.options)
+is_thread_safe(d::BShufZDecodeOptions) = is_thread_safe(d.options)
 
-function try_find_decoded_size(::BitshuffleCompressDecodeOptions, src::AbstractVector{UInt8})::Int64
+function try_find_decoded_size(d::BShufZDecodeOptions, src::AbstractVector{UInt8})::Int64
     if length(src) < 12
-        throw(BitshuffleDecodingError("unexpected end of input"))
+        throw(BShufDecodingError("unexpected end of input"))
     else
         decoded_size = load_int64_BE(src, Int64(0))
         if signbit(decoded_size)
-            throw(BitshuffleDecodingError("decoded size is negative"))
+            throw(BShufDecodingError("decoded size is negative"))
+        elseif !iszero(mod(decoded_size, d.codec.element_size))
+            throw(BShufDecodingError("decoded_size isn't a multiple of element_size"))
         else
             decoded_size
         end
     end
 end
 
-function try_decode!(d::BitshuffleCompressDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::BShufZDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
     check_contiguous(dst)
     check_contiguous(src)
     decoded_size = try_find_decoded_size(d, src)
@@ -283,7 +284,7 @@ function try_decode!(d::BitshuffleCompressDecodeOptions, dst::AbstractVector{UIn
     read_block_nbytes = load_int32_BE(src, Int64(8))
     src_left -= 12
     if read_block_nbytes < 0
-        throw(BitshuffleDecodingError("block size must not be negative"))
+        throw(BShufDecodingError("block size must not be negative"))
     end
     # Try and match C library handling of parsing the block_size
     block_size = fld(read_block_nbytes, elem_size)
@@ -291,7 +292,7 @@ function try_decode!(d::BitshuffleCompressDecodeOptions, dst::AbstractVector{UIn
         block_size = default_block_size(elem_size)
     end
     if !iszero(mod(block_size, BLOCKED_MULT))
-        throw(BitshuffleDecodingError("block size must be a multiple of 8"))
+        throw(BShufDecodingError("block size must be a multiple of 8"))
     end
     # allocate temp buffer for decoding output
     max_block_size = min(block_size, fld(decoded_size, BLOCKED_MULT*elem_size) * BLOCKED_MULT)
@@ -304,15 +305,15 @@ function try_decode!(d::BitshuffleCompressDecodeOptions, dst::AbstractVector{UIn
             block_size = fld(dst_left, BLOCKED_MULT*elem_size) * BLOCKED_MULT
         end
         if src_left < 4
-            throw(BitshuffleDecodingError("unexpected end of input"))
+            throw(BShufDecodingError("unexpected end of input"))
         end
         local c_size = load_int32_BE(src, src_size - src_left)
         src_left -= 4
         if c_size < 0
-            throw(BitshuffleDecodingError("block compressed size must not be negative"))
+            throw(BShufDecodingError("block compressed size must not be negative"))
         end
         if src_left < c_size
-            throw(BitshuffleDecodingError("unexpected end of input"))
+            throw(BShufDecodingError("unexpected end of input"))
         end
         local ret = try_decode!(
             d.options,
@@ -321,7 +322,7 @@ function try_decode!(d::BitshuffleCompressDecodeOptions, dst::AbstractVector{UIn
         )
         src_left -= c_size
         if ret != block_size*elem_size
-            throw(BitshuffleDecodingError("saved decoded size is not correct"))
+            throw(BShufDecodingError("saved decoded size is not correct"))
         end
         untrans_bit_elem!(dst, dst_offset, tmp_buf_decode, Int64(0), elem_size, block_size)
         dst_left -= block_size*elem_size
@@ -329,9 +330,9 @@ function try_decode!(d::BitshuffleCompressDecodeOptions, dst::AbstractVector{UIn
     end
     # Now try to copy the rest of the leftover bytes
     if src_left < dst_left
-        throw(BitshuffleDecodingError("unexpected end of input"))
+        throw(BShufDecodingError("unexpected end of input"))
     elseif src_left > dst_left
-        throw(BitshuffleDecodingError("unexpected $(src_left-dst_left) bytes after stream"))
+        throw(BShufDecodingError("unexpected $(src_left-dst_left) bytes after stream"))
     else
         src_offset = src_size - src_left
         for i in 0:dst_left-1

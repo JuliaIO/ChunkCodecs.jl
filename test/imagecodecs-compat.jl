@@ -15,7 +15,7 @@ using Test
 
 codecs = [
     (
-        ChunkCodecBitshuffle.BitshuffleEncodeOptions(codec=ChunkCodecBitshuffle.BitshuffleCodec(
+        ChunkCodecBitshuffle.BShufEncodeOptions(codec=ChunkCodecBitshuffle.BShufCodec(
             1,
             0,
         )),
@@ -26,7 +26,7 @@ codecs = [
         300,
     ),
     (
-        ChunkCodecBitshuffle.BitshuffleEncodeOptions(codec=ChunkCodecBitshuffle.BitshuffleCodec(
+        ChunkCodecBitshuffle.BShufEncodeOptions(codec=ChunkCodecBitshuffle.BShufCodec(
             8,
             0,
         )),
@@ -37,7 +37,7 @@ codecs = [
         300,
     ),
     (
-        ChunkCodecBitshuffle.BitshuffleEncodeOptions(codec=ChunkCodecBitshuffle.BitshuffleCodec(
+        ChunkCodecBitshuffle.BShufEncodeOptions(codec=ChunkCodecBitshuffle.BShufCodec(
             8,
             200,
         )),

@@ -64,18 +64,18 @@ do_hdf5_test(
     100,
 ) for blockSize in [1:5; 2^10; 2^20; 2^30; ChunkCodecLibLz4.LZ4_MAX_INPUT_SIZE;]]
 [do_hdf5_test(
-    BitshuffleEncodeOptions(;codec= BitshuffleCodec(element_size, 0)),
+    BShufEncodeOptions(;codec= BShufCodec(element_size, 0)),
     [UInt16(32008)], [[UInt32(0), UInt32(4), UInt32(element_size)]],
     100,
 ) for element_size in [1:5; 1023;]]
 [do_hdf5_test(
-    BitshuffleEncodeOptions(;codec= BitshuffleCodec(element_size, block_size)),
+    BShufEncodeOptions(;codec= BShufCodec(element_size, block_size)),
     [UInt16(32008)], [[UInt32(0), UInt32(4), UInt32(element_size), UInt32(block_size)]],
     100,
 ) for element_size in [1:5; 1023;], block_size in [0, 8, 2^10]]
 [do_hdf5_test(
-    BitshuffleCompressEncodeOptions(;
-        codec= BitshuffleCompressCodec(element_size, LZ4BlockCodec()),
+    BShufZEncodeOptions(;
+        codec= BShufZCodec(element_size, LZ4BlockCodec()),
         options= LZ4BlockEncodeOptions(),
         block_size,
     ),
@@ -83,8 +83,8 @@ do_hdf5_test(
     100,
 ) for element_size in [1:5; 1023;], block_size in [0, 8, 2^10]]
 [do_hdf5_test(
-    BitshuffleCompressEncodeOptions(;
-        codec= BitshuffleCompressCodec(element_size, ZstdCodec()),
+    BShufZEncodeOptions(;
+        codec= BShufZCodec(element_size, ZstdCodec()),
         options= ZstdEncodeOptions(),
         block_size,
     ),
@@ -133,11 +133,11 @@ function decode_h5_chunk(chunk::AbstractVector{UInt8}, id::Integer, client_data)
         compress = get(client_data, 5, UInt32(0))
         decode(
             if compress == 0
-                ChunkCodecBitshuffle.BitshuffleCodec(element_size, block_size)
+                ChunkCodecBitshuffle.BShufCodec(element_size, block_size)
             elseif compress == 2
-                ChunkCodecBitshuffle.BitshuffleCompressCodec(element_size, ChunkCodecLibLz4.LZ4BlockCodec())
+                ChunkCodecBitshuffle.BShufZCodec(element_size, ChunkCodecLibLz4.LZ4BlockCodec())
             elseif compress == 3
-                ChunkCodecBitshuffle.BitshuffleCompressCodec(element_size, ChunkCodecLibZstd.ZstdCodec())
+                ChunkCodecBitshuffle.BShufZCodec(element_size, ChunkCodecLibZstd.ZstdCodec())
             end,
             chunk,
         )
