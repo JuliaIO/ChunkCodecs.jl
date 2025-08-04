@@ -212,6 +212,15 @@ end
     BCE(;codec= BCC(1, NoopCodec()), options= TestNoopEncodeOptions(), block_size=32)
     @test_throws ArgumentError BCE(;codec= BCC(1, NoopCodec()), options= TestNoopEncodeOptions(element_size=24), block_size=32)
 
+    # Decode options
+    @test_throws ArgumentError BCD(;codec= BCC(1, ZstdCodec()), options= LZ4BlockDecodeOptions())
+    a = BCD(;codec= BCC(1, ZstdCodec()), options= ZstdDecodeOptions())
+    b = BCD{ZstdCodec, ZstdDecodeOptions}(;codec= BCC(1, ZstdCodec()), options= ZstdDecodeOptions())
+    c = BCD{Codec, ZstdDecodeOptions}(;codec= BCC{Codec}(1, ZstdCodec()), options= ZstdDecodeOptions())
+    d = BCD{ZstdCodec, DecodeOptions}(;codec= BCC(1, ZstdCodec()), options= ZstdDecodeOptions())
+    e = BCD{Codec, DecodeOptions}(;codec= BCC{Codec}(1, ZstdCodec()), options= ZstdDecodeOptions())
+    @test typeof(a) == typeof(b)
+    @test allunique(typeof.([b, c, d, e]))
 end
 @testset "unexpected eof" begin
     codec= BShufZCodec(1, ZstdCodec())
