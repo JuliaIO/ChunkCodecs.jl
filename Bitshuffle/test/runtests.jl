@@ -17,7 +17,8 @@ using ChunkCodecCore:
     EncodeOptions,
     DecodeOptions,
     NoopCodec,
-    try_find_decoded_size
+    try_find_decoded_size,
+    try_encode!
 using ChunkCodecTests: test_codec, test_encoder_decoder
 using ChunkCodecLibLz4
 using ChunkCodecLibZstd
@@ -310,4 +311,35 @@ end
         reinterpret(UInt8, [hton(Int32(3))]);
         [0x20, 0x12,];
     ])
+end
+@testset "encoding without enough space" begin
+    codec=BShufZCodec(1, ZstdCodec())
+    e = BShufZEncodeOptions(;
+        codec,
+        options= ZstdEncodeOptions(),
+        block_size= 32,
+    )
+    d = BShufZDecodeOptions(;codec)
+    u = rand(UInt8, 1024)
+    c = encode(e, u)
+    @test decode(d, c) == u
+    for i in 1:length(c)
+        @test isnothing(try_encode!(e, c[1:i-1], u))
+    end
+    # zero length
+    u = UInt8[]
+    c = zeros(UInt8, 12)
+    @test try_encode!(e, c, u) == length(c)
+    @test decode(d, c) == u
+    for i in 1:length(c)
+        @test isnothing(try_encode!(e, c[1:i-1], u))
+    end
+    # one length
+    u = UInt8[0x00]
+    c = zeros(UInt8, 12+1)
+    @test try_encode!(e, c, u) == length(c)
+    @test decode(d, c) == u
+    for i in 1:length(c)
+        @test isnothing(try_encode!(e, c[1:i-1], u))
+    end
 end
