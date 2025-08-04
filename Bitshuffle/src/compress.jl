@@ -183,7 +183,7 @@ function try_encode!(e::BShufZEncodeOptions, dst::AbstractVector{UInt8}, src::Ab
     src_offset = src_size - src_left
     dst_offset = dst_size - dst_left
     # here we copy all leftover bytes, not just full elements
-    # This is incase https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
+    # This is in case https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
     for i in 0:src_left-1
         dst[begin + dst_offset + i] = src[begin + src_offset + i]
     end

@@ -134,7 +134,7 @@ function apply_blocks!(block_fun!, in::AbstractVector{UInt8}, out::AbstractVecto
     offset = (size-size_left)*elem_size
     left_over_bytes = in_nbytes - offset
     # here we copy all leftover bytes, not just full elements
-    # This is incase https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
+    # This is in case https://github.com/kiyo-masui/bitshuffle/issues/3 gets fixed.
     for i in 0:left_over_bytes-1
         out[begin + offset + i] = in[begin + offset + i]
     end
