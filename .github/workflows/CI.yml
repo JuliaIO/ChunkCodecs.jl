@@ -82,19 +82,21 @@ jobs:
           - windows-latest
           - macos-latest
         version:
+          - '1.6'
           - 'pre'
         arch:
           - 'default'
-        include:
+          - 'x86'
+        exclude:
+          - os: macos-latest
+            version: 'x86'
           - os: ubuntu-latest
             version: '1.6'
-            arch: 'default'
-          - os: ubuntu-latest
-            version: 'pre'
             arch: 'x86'
           - os: windows-latest
-            version: 'pre'
-            arch: 'x86'
+            version: '1.6'
+          - os: macos-latest
+            version: '1.6'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
