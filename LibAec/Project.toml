@@ -10,7 +10,7 @@ libaec_jll = "477f73a3-ac25-53e9-8cc3-50b2fa2566f0"
 [compat]
 ChunkCodecCore = "0.5.1"
 libaec_jll = "1"
-julia = "1.9"
+julia = "1.6"
 
 [workspace]
 projects = ["test"]

@@ -2,18 +2,18 @@
 # https://github.com/lz4/lz4/blob/v1.10.0/lib/lz4.h
 # https://github.com/lz4/lz4/blob/v1.10.0/lib/lz4hc.h
 
-const LZ4HC_CLEVEL_MIN::Int32      =  2
-const LZ4HC_CLEVEL_DEFAULT::Int32  =  9
-const LZ4HC_CLEVEL_OPT_MIN::Int32  = 10
-const LZ4HC_CLEVEL_MAX::Int32      = 12
+const LZ4HC_CLEVEL_MIN      =  Int32(2)
+const LZ4HC_CLEVEL_DEFAULT  =  Int32(9)
+const LZ4HC_CLEVEL_OPT_MIN  = Int32(10)
+const LZ4HC_CLEVEL_MAX      = Int32(12)
 
 # Note this is in lz4.c but I'm not sure why
 const LZ4_ACCELERATION_MAX = Int32(65537)
 
 const LZ4_MAX_INPUT_SIZE = Int64(0x7E000000)
 
-const LZ4_MIN_CLEVEL::Int32 = -(LZ4_ACCELERATION_MAX - Int32(1))
-const LZ4_MAX_CLEVEL::Int32 = LZ4HC_CLEVEL_MAX
+const LZ4_MIN_CLEVEL = Int32(-(LZ4_ACCELERATION_MAX - Int32(1)))
+const LZ4_MAX_CLEVEL = Int32(LZ4HC_CLEVEL_MAX)
 
 # LZ4_COMPRESSBOUND assuming `src_size` is in 0:LZ4_MAX_INPUT_SIZE
 function unsafe_lz4_compressbound(src_size::Int64)
