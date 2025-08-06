@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- Added support for Julia 1.6 [#68](https://github.com/JuliaIO/ChunkCodecs.jl/pull/68)
+
 ## [v0.5.2](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v0.5.2) - 2025-07-28
 
 - Allow values in `decoded_size_range` to saturate `encode_bound` to `typemax(Int64)`. [#64](https://github.com/JuliaIO/ChunkCodecs.jl/pull/64)

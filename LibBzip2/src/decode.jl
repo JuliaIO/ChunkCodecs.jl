@@ -102,7 +102,10 @@ function try_resize_decode!(d::BZ2DecodeOptions, dst::AbstractVector{UInt8}, src
                             # there must be progress
                             @assert stream.avail_in < start_avail_in || stream.avail_out < start_avail_out
                         elseif iszero(dst_left) # needs more output
-                            local next_size = @something grow_dst!(dst, max_size) return nothing
+                            local next_size = grow_dst!(dst, max_size)
+                            if isnothing(next_size)
+                                return nothing
+                            end
                             dst_left += next_size - dst_size
                             dst_size = next_size
                             @assert dst_left > 0

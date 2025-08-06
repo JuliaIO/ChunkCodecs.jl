@@ -94,7 +94,10 @@ function try_resize_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, 
                 end
                 if result == BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT
                     @assert iszero(dst_left)
-                    local next_size = @something grow_dst!(dst, max_size) return nothing
+                    local next_size = grow_dst!(dst, max_size)
+                    if isnothing(next_size)
+                        return nothing
+                    end
                     dst_left += next_size - dst_size
                     dst_size = next_size
                     @assert dst_left > 0

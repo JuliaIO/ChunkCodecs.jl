@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- Added support for Julia 1.6 [#68](https://github.com/JuliaIO/ChunkCodecs.jl/pull/68)
+
 ## [v0.1.2](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibAec-v0.1.2) - 2025-07-28
 
 - Added support for Julia 1.9 [#63](https://github.com/JuliaIO/ChunkCodecs.jl/pull/63)

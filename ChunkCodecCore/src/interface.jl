@@ -223,7 +223,9 @@ function try_resize_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{U
         while true
             ds = try_decode!(d, dst, src)::Union{Nothing, Int64}
             if isnothing(ds)
-                @something grow_dst!(dst, max_size) return nothing
+                if isnothing(grow_dst!(dst, max_size))
+                    return nothing
+                end
             else
                 @assert ds ∈ 0:length(dst)
                 return ds
