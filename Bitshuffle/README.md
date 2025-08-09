@@ -6,7 +6,7 @@ This package implements the ChunkCodec interface for the following encoders and 
 ported from the libbitshuffle C library <https://github.com/kiyo-masui/bitshuffle>
 
 1. `BShufCodec`, `BShufEncodeOptions`, `BShufDecodeOptions`
-1. `BShufZCodec`, `BShufZEncodeOptions`, `BShufZDecodeOptions`
+1. `BShufLZCodec`, `BShufLZEncodeOptions`, `BShufLZDecodeOptions`
 
 ## Example
 
