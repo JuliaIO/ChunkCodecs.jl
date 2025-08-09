@@ -12,43 +12,43 @@ The element size can be at most `fld(typemax(Int32), 8)`.
 """
 
 """
-    struct BShufZCodec{C<:Codec} <: Codec
-    BShufZCodec(element_size::Integer, compress::Codec)
+    struct BShufLZCodec{C<:Codec} <: Codec
+    BShufLZCodec(element_size::Integer, compress::Codec)
 
 $bitshufflecompress_docs
 
 """
-struct BShufZCodec{C<:Codec} <: Codec
+struct BShufLZCodec{C<:Codec} <: Codec
     element_size::Int64
     compress::C
-    function BShufZCodec{C}(element_size::Integer, compress::Codec) where C<:Codec
+    function BShufLZCodec{C}(element_size::Integer, compress::Codec) where C<:Codec
         check_in_range(Int64(1):fld(typemax(Int32), 8); element_size)
         new{C}(Int64(element_size), convert(C, compress))
     end
 end
-BShufZCodec(element_size::Integer, compress::Codec) = BShufZCodec{typeof(compress)}(element_size, compress)
+BShufLZCodec(element_size::Integer, compress::Codec) = BShufLZCodec{typeof(compress)}(element_size, compress)
 
-decode_options(x::BShufZCodec) = BShufZDecodeOptions(;codec=x) # default decode options
+decode_options(x::BShufLZCodec) = BShufLZDecodeOptions(;codec=x) # default decode options
 
 """
-    struct BShufZEncodeOptions <: EncodeOptions
-    BShufZEncodeOptions(; kwargs...)
+    struct BShufLZEncodeOptions <: EncodeOptions
+    BShufLZEncodeOptions(; kwargs...)
 
 $bitshufflecompress_docs
 
 # Keyword Arguments
 
-- `codec::BShufZCodec`
+- `codec::BShufLZCodec`
 - `options::EncodeOptions`: block encoding options.
 - `block_size::Integer=0`: Must be a multiple of 8. zero can be used for an automatic block size. This a number of elements not a number of bytes.
 """
-struct BShufZEncodeOptions{C<:Codec, E<:EncodeOptions} <: EncodeOptions
-    codec::BShufZCodec{C}
+struct BShufLZEncodeOptions{C<:Codec, E<:EncodeOptions} <: EncodeOptions
+    codec::BShufLZCodec{C}
     options::E
     block_size::Int64
 end
-function BShufZEncodeOptions{C, E}(;
-        codec::BShufZCodec,
+function BShufLZEncodeOptions{C, E}(;
+        codec::BShufLZCodec,
         options::EncodeOptions,
         block_size::Integer=Int64(0),
         kwargs...
@@ -80,25 +80,25 @@ function BShufZEncodeOptions{C, E}(;
     if max_compressed_block_bytes > typemax(Int32)
         throw(ArgumentError("`options` not able to encode max block size in `typemax(Int32)` bytes."))
     end
-    BShufZEncodeOptions{C, E}(codec, options, Int64(block_size))
+    BShufLZEncodeOptions{C, E}(codec, options, Int64(block_size))
 end
-function BShufZEncodeOptions(;
-        codec::BShufZCodec{C},
+function BShufLZEncodeOptions(;
+        codec::BShufLZCodec{C},
         options::E,
         kwargs...
     ) where {C<:Codec, E<:EncodeOptions}
-    BShufZEncodeOptions{C, E}(; codec, options, kwargs...)
+    BShufLZEncodeOptions{C, E}(; codec, options, kwargs...)
 end
 
-is_thread_safe(e::BShufZEncodeOptions) = is_thread_safe(e.options)
+is_thread_safe(e::BShufLZEncodeOptions) = is_thread_safe(e.options)
 
-is_lossless(e::BShufZEncodeOptions) = is_lossless(e.options)
+is_lossless(e::BShufLZEncodeOptions) = is_lossless(e.options)
 
-function decoded_size_range(e::BShufZEncodeOptions)
+function decoded_size_range(e::BShufLZEncodeOptions)
     Int64(0):e.codec.element_size:typemax(Int64)-1
 end
 
-function encode_bound(e::BShufZEncodeOptions, src_size::Int64)::Int64
+function encode_bound(e::BShufLZEncodeOptions, src_size::Int64)::Int64
     elem_size = e.codec.element_size
     max_block_size = if iszero(e.block_size)
         default_block_size(elem_size)
@@ -120,7 +120,7 @@ function encode_bound(e::BShufZEncodeOptions, src_size::Int64)::Int64
     bound
 end
 
-function try_encode!(e::BShufZEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -193,41 +193,41 @@ function try_encode!(e::BShufZEncodeOptions, dst::AbstractVector{UInt8}, src::Ab
 end
 
 """
-    struct BShufZDecodeOptions <: DecodeOptions
-    BShufZDecodeOptions(; kwargs...)
+    struct BShufLZDecodeOptions <: DecodeOptions
+    BShufLZDecodeOptions(; kwargs...)
 
 $bitshufflecompress_docs
 
 # Keyword Arguments
 
-- `codec::BShufZCodec`
+- `codec::BShufLZCodec`
 - `options::DecodeOptions= decode_options(codec.compress)`: block decoding options.
 """
-struct BShufZDecodeOptions{C<:Codec, D<:DecodeOptions} <: DecodeOptions
-    codec::BShufZCodec{C}
+struct BShufLZDecodeOptions{C<:Codec, D<:DecodeOptions} <: DecodeOptions
+    codec::BShufLZCodec{C}
     options::D
 end
-function BShufZDecodeOptions{C, D}(;
-        codec::BShufZCodec,
+function BShufLZDecodeOptions{C, D}(;
+        codec::BShufLZCodec,
         options::DecodeOptions= decode_options(codec.compress),
         kwargs...
     ) where {C<:Codec, D<:DecodeOptions}
     if !isequal(options.codec, codec.compress)
         throw(ArgumentError("`codec.compress` must match `options.codec`. Got\n`codec.compress` => $(codec.compress)\n`options.codec` => $(options.codec)"))
     end
-    BShufZDecodeOptions{C, D}(codec, options)
+    BShufLZDecodeOptions{C, D}(codec, options)
 end
-function BShufZDecodeOptions(;
-        codec::BShufZCodec{C},
+function BShufLZDecodeOptions(;
+        codec::BShufLZCodec{C},
         options::D= decode_options(codec.compress),
         kwargs...
     ) where {C<:Codec, D<:DecodeOptions}
-    BShufZDecodeOptions{C, D}(;codec, options, kwargs...)
+    BShufLZDecodeOptions{C, D}(;codec, options, kwargs...)
 end
 
-is_thread_safe(d::BShufZDecodeOptions) = is_thread_safe(d.options)
+is_thread_safe(d::BShufLZDecodeOptions) = is_thread_safe(d.options)
 
-function try_find_decoded_size(d::BShufZDecodeOptions, src::AbstractVector{UInt8})::Int64
+function try_find_decoded_size(d::BShufLZDecodeOptions, src::AbstractVector{UInt8})::Int64
     if length(src) < 12
         throw(BShufDecodingError("unexpected end of input"))
     else
@@ -242,7 +242,7 @@ function try_find_decoded_size(d::BShufZDecodeOptions, src::AbstractVector{UInt8
     end
 end
 
-function try_decode!(d::BShufZDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::BShufLZDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
     check_contiguous(dst)
     check_contiguous(src)
     decoded_size = try_find_decoded_size(d, src)

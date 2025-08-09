@@ -6,9 +6,9 @@ using ChunkCodecBitshuffle:
     BShufCodec,
     BShufEncodeOptions,
     BShufDecodeOptions,
-    BShufZCodec,
-    BShufZEncodeOptions,
-    BShufZDecodeOptions
+    BShufLZCodec,
+    BShufLZEncodeOptions,
+    BShufLZDecodeOptions
 using ChunkCodecCore:
     ChunkCodecCore,
     decode,
@@ -140,26 +140,26 @@ end
     for element_size in [1; 8; 256; 513;]
         for block_size in [0; 8; 24; 2^20;]
             # zero is default
-            c = BShufZCodec(element_size, ZstdCodec())
+            c = BShufLZCodec(element_size, ZstdCodec())
             # @show c
             test_codec(
                 c,
-                BShufZEncodeOptions(;codec= c, options= ZstdEncodeOptions(), block_size),
-                BShufZDecodeOptions(;codec= c);
+                BShufLZEncodeOptions(;codec= c, options= ZstdEncodeOptions(), block_size),
+                BShufLZDecodeOptions(;codec= c);
                 trials=10,
             )
         end
     end
-    c = BShufZCodec(5, LZ4BlockCodec())
+    c = BShufLZCodec(5, LZ4BlockCodec())
     test_codec(
         c,
-        BShufZEncodeOptions(;codec= c, options= LZ4BlockEncodeOptions()),
-        BShufZDecodeOptions(;codec= c);
+        BShufLZEncodeOptions(;codec= c, options= LZ4BlockEncodeOptions()),
+        BShufLZDecodeOptions(;codec= c);
         trials=10,
     )
 end
 @testset "non multiple of element size compress" begin
-    e_opt = BShufZEncodeOptions(;codec=BShufZCodec(5, LZ4BlockCodec()), options=LZ4BlockEncodeOptions())
+    e_opt = BShufLZEncodeOptions(;codec=BShufLZCodec(5, LZ4BlockCodec()), options=LZ4BlockEncodeOptions())
     # Ref https://github.com/kiyo-masui/bitshuffle/issues/3
     @test_throws ArgumentError encode(e_opt, zeros(UInt8, 42))
     # decode will copy leftover bytes at the end for future bitshuffle compatibility.
@@ -168,10 +168,10 @@ end
     e[8] = 42
     @test_throws BShufDecodingError("decoded_size isn't a multiple of element_size") decode(e_opt.codec, [e; 0x12; 0x34;]) == [ones(UInt8, 40); 0x12; 0x34;]
 end
-@testset "BShufZ constructors" begin
-    BCC = BShufZCodec
-    BCE = BShufZEncodeOptions
-    BCD = BShufZDecodeOptions
+@testset "BShufLZ constructors" begin
+    BCC = BShufLZCodec
+    BCE = BShufLZEncodeOptions
+    BCD = BShufLZDecodeOptions
     @test_throws ArgumentError BCC(0, LZ4BlockCodec())
     @test_throws ArgumentError BCC(-1, LZ4BlockCodec())
     @test_throws ArgumentError BCC(fld(typemax(Int32),8) + 1, LZ4BlockCodec())
@@ -224,11 +224,11 @@ end
     @test allunique(typeof.([b, c, d, e]))
 end
 @testset "unexpected eof" begin
-    codec= BShufZCodec(1, ZstdCodec())
+    codec= BShufLZCodec(1, ZstdCodec())
     for element_size in (1,5)
-        codec= BShufZCodec(element_size, ZstdCodec())
+        codec= BShufLZCodec(element_size, ZstdCodec())
         for block_size in (0,8,16,1000,1008,10000)
-            e_opt = BShufZEncodeOptions(;
+            e_opt = BShufLZEncodeOptions(;
                 codec,
                 options= ZstdEncodeOptions(),
                 block_size,
@@ -244,15 +244,15 @@ end
         end
     end
 end
-@testset "BShufZ errors" begin
+@testset "BShufLZ errors" begin
     @test sprint(Base.showerror, BShufDecodingError("foo")) ==
         "BShufDecodingError: foo"
-    codec=BShufZCodec(1, ZstdCodec())
-    e = BShufZEncodeOptions(;
+    codec=BShufLZCodec(1, ZstdCodec())
+    e = BShufLZEncodeOptions(;
         codec,
         options= ZstdEncodeOptions(),
     )
-    d = BShufZDecodeOptions(;codec)
+    d = BShufLZDecodeOptions(;codec)
     # less than 12 bytes
     @test_throws BShufDecodingError("unexpected end of input") try_find_decoded_size(d, UInt8[])
     @test_throws BShufDecodingError("decoded size is negative") try_find_decoded_size(d, fill(0xFF,12))
@@ -313,13 +313,13 @@ end
     ])
 end
 @testset "encoding without enough space" begin
-    codec=BShufZCodec(1, ZstdCodec())
-    e = BShufZEncodeOptions(;
+    codec=BShufLZCodec(1, ZstdCodec())
+    e = BShufLZEncodeOptions(;
         codec,
         options= ZstdEncodeOptions(),
         block_size= 32,
     )
-    d = BShufZDecodeOptions(;codec)
+    d = BShufLZDecodeOptions(;codec)
     u = rand(UInt8, 1024)
     c = encode(e, u)
     @test decode(d, c) == u

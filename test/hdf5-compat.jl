@@ -74,8 +74,8 @@ do_hdf5_test(
     100,
 ) for element_size in [1:5; 1023;], block_size in [0, 8, 2^10]]
 [do_hdf5_test(
-    BShufZEncodeOptions(;
-        codec= BShufZCodec(element_size, LZ4BlockCodec()),
+    BShufLZEncodeOptions(;
+        codec= BShufLZCodec(element_size, LZ4BlockCodec()),
         options= LZ4BlockEncodeOptions(),
         block_size,
     ),
@@ -83,8 +83,8 @@ do_hdf5_test(
     100,
 ) for element_size in [1:5; 1023;], block_size in [0, 8, 2^10]]
 [do_hdf5_test(
-    BShufZEncodeOptions(;
-        codec= BShufZCodec(element_size, ZstdCodec()),
+    BShufLZEncodeOptions(;
+        codec= BShufLZCodec(element_size, ZstdCodec()),
         options= ZstdEncodeOptions(),
         block_size,
     ),
@@ -135,9 +135,9 @@ function decode_h5_chunk(chunk::AbstractVector{UInt8}, id::Integer, client_data)
             if compress == 0
                 ChunkCodecBitshuffle.BShufCodec(element_size, block_size)
             elseif compress == 2
-                ChunkCodecBitshuffle.BShufZCodec(element_size, ChunkCodecLibLz4.LZ4BlockCodec())
+                ChunkCodecBitshuffle.BShufLZCodec(element_size, ChunkCodecLibLz4.LZ4BlockCodec())
             elseif compress == 3
-                ChunkCodecBitshuffle.BShufZCodec(element_size, ChunkCodecLibZstd.ZstdCodec())
+                ChunkCodecBitshuffle.BShufLZCodec(element_size, ChunkCodecLibZstd.ZstdCodec())
             end,
             chunk,
         )

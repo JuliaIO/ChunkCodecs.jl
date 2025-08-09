@@ -23,9 +23,9 @@ export BShufDecodingError,
     BShufCodec,
     BShufEncodeOptions,
     BShufDecodeOptions,
-    BShufZCodec,
-    BShufZEncodeOptions,
-    BShufZDecodeOptions
+    BShufLZCodec,
+    BShufLZEncodeOptions,
+    BShufLZDecodeOptions
 
 # reexport ChunkCodecCore
 using ChunkCodecCore: ChunkCodecCore, encode, decode
