@@ -23,6 +23,8 @@ A consistent Julia interface for lossless encoding and decoding of bytes in memo
 | Gzip | .gz RFC1952 | ChunkCodecLibZlib | ✅ | ✅ |
 | Deflate | RFC1951 | ChunkCodecLibZlib | ✅ | ✅ |
 | BZ2 | .bz2 bzip2 | ChunkCodecLibBzip2 | ✅ | ✅ |
+| BShufLZ |  | ChunkCodecBitshuffle | ✅ | ✅ |
+| BShuf |  | ChunkCodecBitshuffle | ✅ | ✅ |
 | Brotli | .br RFC7932 | ChunkCodecLibBrotli | ✅ | ✅ |
 | Blosc |  | ChunkCodecLibBlosc | ✅ | ✅ |
 
