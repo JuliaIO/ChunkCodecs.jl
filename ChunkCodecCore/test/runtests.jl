@@ -3,7 +3,7 @@ using ChunkCodecCore:
     ChunkCodecCore,
     NoopCodec, NoopEncodeOptions, NoopDecodeOptions,
     ShuffleCodec, ShuffleEncodeOptions, ShuffleDecodeOptions,
-    DecodedSizeError, decode, decode!
+    DecodedSizeError, decode, decode!, MaybeSize, NOT_SIZE, is_size
 using ChunkCodecTests:ChunkCodecTests, test_codec, test_encoder_decoder
 using Aqua: Aqua
 using Test: @test, @testset, @test_throws
@@ -37,9 +37,10 @@ end
     @test_throws ArgumentError ShuffleCodec(typemin(Int64))
 end
 @testset "errors" begin
-    @test sprint(Base.showerror, DecodedSizeError(1, 2)) == "DecodedSizeError: decoded size: 2 is greater than max size: 1"
-    @test sprint(Base.showerror, DecodedSizeError(2, 1)) == "DecodedSizeError: decoded size: 1 is less than expected size: 2"
-    @test sprint(Base.showerror, DecodedSizeError(1, nothing)) == "DecodedSizeError: decoded size is greater than max size: 1"
+    @test sprint(Base.showerror, DecodedSizeError(1, MaybeSize(2))) == "DecodedSizeError: decoded size: 2 is greater than max size: 1"
+    @test sprint(Base.showerror, DecodedSizeError(2, MaybeSize(1))) == "DecodedSizeError: decoded size: 1 is less than expected size: 2"
+    @test sprint(Base.showerror, DecodedSizeError(1, NOT_SIZE)) == "DecodedSizeError: decoded size is greater than max size: 1"
+    @test sprint(Base.showerror, DecodedSizeError(1, MaybeSize(-10))) == "DecodedSizeError: decoded size is greater than max size: 1 decoder hints to try with 10 bytes"
 end
 @testset "check helpers" begin
     @test_throws Exception ChunkCodecCore.check_contiguous(@view(zeros(UInt8, 8)[1:2:end]))
@@ -80,15 +81,15 @@ function TestDecodeOptions(;
     )
     TestDecodeOptions(codec)
 end
-ChunkCodecCore.try_find_decoded_size(::TestDecodeOptions, src::AbstractVector{UInt8}) = nothing
-function ChunkCodecCore.try_decode!(::TestDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+ChunkCodecCore.try_find_decoded_size(::TestDecodeOptions, src::AbstractVector{UInt8}) = NOT_SIZE
+function ChunkCodecCore.try_decode!(::TestDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     if dst_size < src_size
-        nothing
+        NOT_SIZE
     else
         copyto!(dst, src)
-        src_size
+        MaybeSize(src_size)
     end
 end
 
@@ -103,13 +104,13 @@ end
     @test decode(d, ones(UInt8, Int64(100)); size_hint=Int64(99), max_size=Int64(100)) == ones(UInt8, Int64(100))
     @test_throws DecodedSizeError decode(d, ones(UInt8, Int64(100)); size_hint=Int64(200), max_size=Int64(99))
     # negative max_size
-    @test_throws DecodedSizeError(Int64(-1), nothing) decode(d, ones(UInt8, Int64(100)); max_size=Int64(-1))
-    @test_throws DecodedSizeError(typemin(Int64), nothing) decode(d, ones(UInt8, Int64(100)); max_size=typemin(Int128))
+    @test_throws DecodedSizeError(Int64(-1), NOT_SIZE) decode(d, ones(UInt8, Int64(100)); max_size=Int64(-1))
+    @test_throws DecodedSizeError(typemin(Int64), NOT_SIZE) decode(d, ones(UInt8, Int64(100)); max_size=typemin(Int128))
 end
 @testset "decode!" begin
     d = TestDecodeOptions()
-    @test_throws DecodedSizeError(3, 2) decode!(d, zeros(UInt8, 3), ones(UInt8, 2))
-    @test_throws DecodedSizeError(3, nothing) decode!(d, zeros(UInt8, 3), ones(UInt8, 4))
+    @test_throws DecodedSizeError(3, MaybeSize(2)) decode!(d, zeros(UInt8, 3), ones(UInt8, 2))
+    @test_throws DecodedSizeError(3, NOT_SIZE) decode!(d, zeros(UInt8, 3), ones(UInt8, 4))
     dst = zeros(UInt8, 3)
     @test decode!(d, dst, ones(UInt8, 3)) === dst
     @test dst == ones(UInt8, 3)

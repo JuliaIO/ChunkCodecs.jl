@@ -51,17 +51,17 @@ decoded_size_range(::ShuffleCodec) = Int64(0):Int64(1):typemax(Int64)-Int64(1)
 
 encode_bound(::ShuffleCodec, src_size::Int64)::Int64 = src_size
 
-function try_encode!(e::ShuffleCodec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::ShuffleCodec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     element_size = e.element_size
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < src_size
-        nothing
+        MaybeSize(-src_size)
     else
         if src_size>>1 < element_size || element_size == 1
             copyto!(dst, src)
-            return src_size
+            return MaybeSize(src_size)
         end
         n_elements, n_remainder = fldmod(src_size, element_size)
         @inbounds for i in 0:(element_size-1)
@@ -73,7 +73,7 @@ function try_encode!(e::ShuffleCodec, dst::AbstractVector{UInt8}, src::AbstractV
         for i in 0:(n_remainder-1)
             dst[begin + offset + i] = src[begin + offset + i]
         end
-        return src_size
+        return MaybeSize(src_size)
     end
 end
 
@@ -103,7 +103,7 @@ decoded_size_range(x::ShuffleEncodeOptions) = decoded_size_range(x.codec)
 
 encode_bound(x::ShuffleEncodeOptions, src_size::Int64)::Int64 = encode_bound(x.codec, src_size)
 
-function try_encode!(x::ShuffleEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(x::ShuffleEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     try_encode!(x.codec, dst, src)
 end
 
@@ -129,20 +129,20 @@ end
 
 is_thread_safe(::ShuffleDecodeOptions) = true
 
-function try_find_decoded_size(::ShuffleDecodeOptions, src::AbstractVector{UInt8})::Int64
-    length(src)
+function try_find_decoded_size(::ShuffleDecodeOptions, src::AbstractVector{UInt8})
+    MaybeSize(length(src))
 end
 
-function try_decode!(d::ShuffleDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::ShuffleDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     element_size = d.codec.element_size
     if dst_size < src_size
-        nothing
+        MaybeSize(-src_size)
     else
         if src_size>>1 < element_size || element_size == 1
             copyto!(dst, src)
-            return src_size
+            return MaybeSize(src_size)
         end
         n_elements, n_remainder = fldmod(src_size, element_size)
         @inbounds for i in 0:(element_size-1)
@@ -154,6 +154,6 @@ function try_decode!(d::ShuffleDecodeOptions, dst::AbstractVector{UInt8}, src::A
         for i in 0:(n_remainder-1)
             dst[begin + offset + i] = src[begin + offset + i]
         end
-        return src_size
+        return MaybeSize(src_size)
     end
 end

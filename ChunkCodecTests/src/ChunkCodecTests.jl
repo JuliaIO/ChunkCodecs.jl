@@ -16,7 +16,10 @@ using ChunkCodecCore:
     try_find_decoded_size,
     try_encode!,
     try_decode!,
-    try_resize_decode!
+    try_resize_decode!,
+    MaybeSize,
+    NOT_SIZE,
+    is_size
 
 using Test: Test, @test, @test_throws
 
@@ -79,59 +82,60 @@ function test_encoder_decoder(e, d; trials=100)
         for buffer_size in [length(encoded):length(encoded)+11; max(e_bound-11,0):e_bound+11;]
             buffer .= b_copy
             local encoded_size = try_encode!(e, view(buffer,1:buffer_size), data)
+            @test encoded_size isa MaybeSize
             # try to test no out of bounds writing
             @test @view(buffer[buffer_size+1:end]) == @view(b_copy[buffer_size+1:end])
-            if !isnothing(encoded_size)
-                @test decode(d, view(buffer, 1:encoded_size)) == data
+            if is_size(encoded_size)
+                @test decode(d, view(buffer, 1:Int64(encoded_size))) == data
             else
                 @test buffer_size < e_bound
             end
         end
         # @test try_encode!(e, zeros(UInt8, length(encoded)+1), data) === length(encoded)
         if length(encoded) > 0
-            @test isnothing(try_encode!(e, zeros(UInt8, length(encoded)-1), data))
+            @test !is_size(try_encode!(e, zeros(UInt8, length(encoded)-1), data))
         end
         local ds = try_find_decoded_size(d, encoded)
-        @test ds isa Union{Nothing, Int64}
-        if !isnothing(ds)
-            @test ds === s
+        @test ds isa MaybeSize
+        if is_size(ds)
+            @test Int64(ds) === s
         end
         local dst = zeros(UInt8, s)
-        @test try_decode!(d, dst, encoded) === s
+        @test try_decode!(d, dst, encoded) === MaybeSize(s)
         @test dst == data
         if s > 0
             dst = zeros(UInt8, s - 1)
-            @test isnothing(try_decode!(d, dst, encoded))
-            @test isnothing(try_decode!(d, UInt8[], encoded))
+            @test !is_size(try_decode!(d, dst, encoded))
+            @test !is_size(try_decode!(d, UInt8[], encoded))
         end
         dst = zeros(UInt8, s + 1)
-        @test try_decode!(d, dst, encoded) === s
+        @test try_decode!(d, dst, encoded) === MaybeSize(s)
         @test length(dst) == s + 1
         @test dst[1:s] == data
 
         if s > 0
             dst = zeros(UInt8, s - 1)
-            @test isnothing(try_resize_decode!(d, dst, encoded, Int64(-1)))
+            @test !is_size(try_resize_decode!(d, dst, encoded, Int64(-1)))
             @test length(dst) == s - 1
             dst = zeros(UInt8, s - 1)
-            @test try_resize_decode!(d, dst, encoded, s) == s
+            @test try_resize_decode!(d, dst, encoded, s) === MaybeSize(s)
             @test length(dst) == s
             @test dst == data
             dst = UInt8[]
-            @test isnothing(try_resize_decode!(d, dst, encoded, Int64(0)))
+            @test !is_size(try_resize_decode!(d, dst, encoded, Int64(0)))
         end
         if s > 1
             dst = UInt8[]
-            @test isnothing(try_resize_decode!(d, dst, encoded, Int64(1)))
+            @test !is_size(try_resize_decode!(d, dst, encoded, Int64(1)))
             dst = UInt8[0x01]
-            @test isnothing(try_resize_decode!(d, dst, encoded, Int64(1)))
-            @test_throws DecodedSizeError(1, try_find_decoded_size(d, encoded)) decode(d, encoded; max_size=Int64(1))
+            @test !is_size(try_resize_decode!(d, dst, encoded, Int64(1)))
+            @test_throws DecodedSizeError decode(d, encoded; max_size=Int64(1))
         end
         dst_buffer = zeros(UInt8, s + 2)
         dst = view(dst_buffer, 1:s+1)
-        @test try_resize_decode!(d, dst, encoded, s-1) === s
-        @test try_resize_decode!(d, dst, encoded, s) === s
-        @test try_resize_decode!(d, dst, encoded, s+2) === s
+        @test try_resize_decode!(d, dst, encoded, s-1) === MaybeSize(s)
+        @test try_resize_decode!(d, dst, encoded, s) === MaybeSize(s)
+        @test try_resize_decode!(d, dst, encoded, s+2) === MaybeSize(s)
         @test length(dst) == s + 1
         @test dst[1:s] == data
         @test dst_buffer[end] == 0x00

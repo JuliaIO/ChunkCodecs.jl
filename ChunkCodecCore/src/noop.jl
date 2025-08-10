@@ -38,15 +38,15 @@ decoded_size_range(::NoopEncodeOptions) = Int64(0):Int64(1):typemax(Int64)-Int64
 
 encode_bound(::NoopEncodeOptions, src_size::Int64)::Int64 = src_size
 
-function try_encode!(e::NoopEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::NoopEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < src_size
-        nothing
+        MaybeSize(-src_size)
     else
         copyto!(dst, src)
-        src_size
+        MaybeSize(src_size)
     end
 end
 
@@ -72,17 +72,17 @@ end
 
 is_thread_safe(::NoopDecodeOptions) = true
 
-function try_find_decoded_size(::NoopDecodeOptions, src::AbstractVector{UInt8})::Int64
-    length(src)
+function try_find_decoded_size(::NoopDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+    MaybeSize(length(src))
 end
 
-function try_decode!(::NoopDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(::NoopDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     if dst_size < src_size
-        nothing
+        MaybeSize(-src_size)
     else
         copyto!(dst, src)
-        src_size
+        MaybeSize(src_size)
     end
 end
