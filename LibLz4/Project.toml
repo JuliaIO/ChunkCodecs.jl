@@ -1,14 +1,14 @@
 name = "ChunkCodecLibLz4"
 uuid = "7e9cc85e-5614-42a3-ad86-b78f920b38a5"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.2.2"
+version = "0.3.0-dev"
 
 [deps]
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
 Lz4_jll = "5ced341a-0733-55b8-9ab6-a4889d929147"
 
 [compat]
-ChunkCodecCore = "0.5"
+ChunkCodecCore = "0.6"
 Lz4_jll = "1"
 julia = "1.6"
 

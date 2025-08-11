@@ -34,7 +34,7 @@ function encode_bound(e::SnappyEncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::SnappyEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::SnappyEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)

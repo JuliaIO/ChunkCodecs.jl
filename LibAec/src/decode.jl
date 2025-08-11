@@ -33,7 +33,7 @@ function SzipHDF5DecodeOptions(;
     SzipHDF5DecodeOptions(codec)
 end
 
-function try_find_decoded_size(::SzipHDF5DecodeOptions, src::AbstractVector{UInt8})::Int64
+function try_find_decoded_size(::SzipHDF5DecodeOptions, src::AbstractVector{UInt8})::MaybeSize
     if length(src) < 4
         throw(SzipDecodingError("unexpected end of input"))
     else
@@ -45,11 +45,10 @@ function try_find_decoded_size(::SzipHDF5DecodeOptions, src::AbstractVector{UInt
     end
 end
 
-function try_decode!(d::SzipHDF5DecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::SzipHDF5DecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
-    decoded_size = try_find_decoded_size(d, src)
-    @assert !isnothing(decoded_size)
+    decoded_size::Int64 = try_find_decoded_size(d, src)
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     if decoded_size > dst_size

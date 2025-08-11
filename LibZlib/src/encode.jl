@@ -125,7 +125,7 @@ _max_decoded_size(::GzipEncodeOptions)::Int64 = 0x7ff60087fa602c66
 
 decoded_size_range(e::_AllEncodeOptions) = Int64(0):Int64(1):_max_decoded_size(e)
 
-function try_encode!(e::_AllEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::_AllEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     # -15: deflate, 15: zlib, 15+16: gzip
     # smaller windowBits might break encode bound
     windowBits = _windowBits(e.codec)

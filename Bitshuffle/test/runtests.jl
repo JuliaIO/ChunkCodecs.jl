@@ -18,7 +18,9 @@ using ChunkCodecCore:
     DecodeOptions,
     NoopCodec,
     try_find_decoded_size,
-    try_encode!
+    try_encode!,
+    MaybeSize,
+    is_size
 using ChunkCodecTests: test_codec, test_encoder_decoder
 using ChunkCodecLibLz4
 using ChunkCodecLibZstd
@@ -75,7 +77,7 @@ function TestNoopEncodeOptions(;
 end
 ChunkCodecCore.encode_bound(::TestNoopEncodeOptions, src_size::Int64)::Int64 = src_size
 ChunkCodecCore.decoded_size_range(e::TestNoopEncodeOptions) = Int64(8):e.element_size:typemax(Int64)-Int64(1)
-function ChunkCodecCore.try_encode!(e::TestNoopEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function ChunkCodecCore.try_encode!(e::TestNoopEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     check_in_range(decoded_size_range(e); src_size)
@@ -256,7 +258,7 @@ end
     # less than 12 bytes
     @test_throws BShufDecodingError("unexpected end of input") try_find_decoded_size(d, UInt8[])
     @test_throws BShufDecodingError("decoded size is negative") try_find_decoded_size(d, fill(0xFF,12))
-    @test typemax(Int64) == try_find_decoded_size(d, [0x7F; fill(0xFF, 11);])
+    @test MaybeSize(typemax(Int64)) == try_find_decoded_size(d, [0x7F; fill(0xFF, 11);])
     # invalid block size
     @test_throws BShufDecodingError("block size must not be negative") decode(d, [
         reinterpret(UInt8, [hton(Int64(0))]);
@@ -324,22 +326,22 @@ end
     c = encode(e, u)
     @test decode(d, c) == u
     for i in 1:length(c)
-        @test isnothing(try_encode!(e, c[1:i-1], u))
+        @test !is_size(try_encode!(e, c[1:i-1], u))
     end
     # zero length
     u = UInt8[]
     c = zeros(UInt8, 12)
-    @test try_encode!(e, c, u) == length(c)
+    @test try_encode!(e, c, u) == MaybeSize(length(c))
     @test decode(d, c) == u
     for i in 1:length(c)
-        @test isnothing(try_encode!(e, c[1:i-1], u))
+        @test !is_size(try_encode!(e, c[1:i-1], u))
     end
     # one length
     u = UInt8[0x00]
     c = zeros(UInt8, 12+1)
-    @test try_encode!(e, c, u) == length(c)
+    @test try_encode!(e, c, u) == MaybeSize(length(c))
     @test decode(d, c) == u
     for i in 1:length(c)
-        @test isnothing(try_encode!(e, c[1:i-1], u))
+        @test !is_size(try_encode!(e, c[1:i-1], u))
     end
 end

@@ -1,7 +1,7 @@
 name = "ChunkCodecLibBlosc"
 uuid = "c6a955be-ab7f-4fbb-b38f-caf93db6b928"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.2.1"
+version = "0.3.0-dev"
 
 [deps]
 Blosc_jll = "0b7ba130-8d10-5ba8-a3d6-c5182647fed9"
@@ -9,7 +9,7 @@ ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
 
 [compat]
 Blosc_jll = "1"
-ChunkCodecCore = "0.5"
+ChunkCodecCore = "0.6"
 julia = "1.6"
 
 [workspace]

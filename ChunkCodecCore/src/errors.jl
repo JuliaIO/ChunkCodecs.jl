@@ -6,6 +6,55 @@ Generic error for data that cannot be decoded.
 abstract type DecodingError <: Exception end
 
 """
+    struct MaybeSize
+        val::Int64
+    end
+
+If `val ≥ 0` this represents a size, and can be converted back and forth with `Int64`.
+Otherwise will error when converted to and from `Int64`.
+`-val` is a size hint if not `typemin(Int64)`.
+
+`nothing` can be converted to and from `MaybeSize(typemin(Int64))`
+"""
+struct MaybeSize
+    val::Int64
+end
+"""
+    const NOT_SIZE = MaybeSize(typemin(Int64))
+"""
+const NOT_SIZE = MaybeSize(typemin(Int64))
+function is_size(x::MaybeSize)::Bool
+    !signbit(x.val)
+end
+function Base.Int64(x::MaybeSize)
+    if !is_size(x)
+        throw(InexactError(:Int64, Int64, x))
+    else
+        x.val
+    end
+end
+function Base.convert(::Type{Int64}, x::MaybeSize)
+    Int64(x)
+end
+function Base.convert(::Type{MaybeSize}, x::Int64)::MaybeSize
+    if signbit(x)
+        throw(InexactError(:convert, MaybeSize, x))
+    else
+        MaybeSize(x)
+    end
+end
+function Base.convert(::Type{MaybeSize}, x::Nothing)::MaybeSize
+    NOT_SIZE
+end
+function Base.convert(::Type{Nothing}, x::MaybeSize)::Nothing
+    if x !== NOT_SIZE
+        throw(InexactError(:convert, Nothing, x))
+    else
+        nothing
+    end
+end
+
+"""
     struct DecodedSizeError <: Exception
     DecodedSizeError(max_size, decoded_size)
 
@@ -15,24 +64,33 @@ If the decoded size is unknown `decoded_size` is `nothing`.
 """
 struct DecodedSizeError <: Exception
     max_size::Int64
-    decoded_size::Union{Nothing, Int64}
+    decoded_size::MaybeSize
 end
 
 function Base.showerror(io::IO, err::DecodedSizeError)
     print(io, "DecodedSizeError: ")
-    if isnothing(err.decoded_size)
+    if err.decoded_size === NOT_SIZE
         print(io, "decoded size is greater than max size: ")
         print(io, err.max_size)
-    elseif err.decoded_size < err.max_size
-        print(io, "decoded size: ")
-        print(io, err.decoded_size)
-        print(io, " is less than expected size: ")
+    elseif !is_size(err.decoded_size)
+        print(io, "decoded size is greater than max size: ")
         print(io, err.max_size)
+        print(io, " decoder hints to try with ")
+        print(io, -err.decoded_size.val)
+        print(io, " bytes")
     else
-        print(io, "decoded size: ")
-        print(io, err.decoded_size)
-        print(io, " is greater than max size: ")
-        print(io, err.max_size)
+        decoded_size::Int64 = err.decoded_size
+        if decoded_size < err.max_size
+            print(io, "decoded size: ")
+            print(io, decoded_size)
+            print(io, " is less than expected size: ")
+            print(io, err.max_size)
+        else
+            print(io, "decoded size: ")
+            print(io, decoded_size)
+            print(io, " is greater than max size: ")
+            print(io, err.max_size)
+        end
     end
     nothing
 end

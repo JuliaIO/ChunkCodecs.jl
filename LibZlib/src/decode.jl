@@ -84,14 +84,14 @@ const _AllDecodeOptions = Union{ZlibDecodeOptions, DeflateDecodeOptions, GzipDec
 
 is_thread_safe(::_AllDecodeOptions) = true
 
-function try_find_decoded_size(::_AllDecodeOptions, src::AbstractVector{UInt8})::Nothing
+function try_find_decoded_size(::_AllDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
     nothing
 end
-function try_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     try_resize_decode!(d, dst, src, Int64(length(dst)))
 end
 
-function try_resize_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}
+function try_resize_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     src_left::Int64 = src_size
