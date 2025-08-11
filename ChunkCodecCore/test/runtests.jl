@@ -97,6 +97,32 @@ end
     test_codec(NoopCodec(), NoopEncodeOptions(), TestDecodeOptions(); trials=100)
 end
 
+# version of NoopDecodeOptions that returns random size hints in try_decode!
+struct RandHintDecodeOptions <: ChunkCodecCore.DecodeOptions
+    codec::NoopCodec
+end
+function RandHintDecodeOptions(;
+        codec::NoopCodec=NoopCodec(),
+        kwargs...
+    )
+    RandHintDecodeOptions(codec)
+end
+ChunkCodecCore.try_find_decoded_size(::RandHintDecodeOptions, src::AbstractVector{UInt8}) = NOT_SIZE
+function ChunkCodecCore.try_decode!(::RandHintDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
+    dst_size::Int64 = length(dst)
+    src_size::Int64 = length(src)
+    if dst_size < src_size
+        MaybeSize(-rand(Int64(1):2*src_size))
+    else
+        copyto!(dst, src)
+        MaybeSize(src_size)
+    end
+end
+
+@testset "decode with random decoded size hint" begin
+    test_codec(NoopCodec(), NoopEncodeOptions(), RandHintDecodeOptions(); trials=100)
+end
+
 @testset "decode size_hint and resizing" begin
     d = TestDecodeOptions()
     @test decode(d, ones(UInt8, Int64(100)); size_hint=Int64(200)) == ones(UInt8, Int64(100))

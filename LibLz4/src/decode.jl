@@ -367,7 +367,6 @@ function try_decode!(d::LZ4NumcodecsDecodeOptions, dst::AbstractVector{UInt8}, s
     check_contiguous(dst)
     check_contiguous(src)
     decoded_size::Int64 = try_find_decoded_size(d, src)
-    @assert !isnothing(decoded_size)
     src_size::Int64 = length(src)
     if src_size-4 > typemax(Int32)
         throw(LZ4DecodingError("encoded size is larger than `typemax(Int32) + 4`"))

@@ -26,7 +26,7 @@ const NOT_SIZE = MaybeSize(typemin(Int64))
 function is_size(x::MaybeSize)::Bool
     !signbit(x.val)
 end
-function Int64(x::MaybeSize)
+function Base.Int64(x::MaybeSize)
     if !is_size(x)
         throw(InexactError(:Int64, Int64, x))
     else
