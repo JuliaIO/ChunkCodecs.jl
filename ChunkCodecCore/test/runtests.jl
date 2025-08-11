@@ -36,6 +36,33 @@ end
     @test_throws ArgumentError ShuffleCodec(-1)
     @test_throws ArgumentError ShuffleCodec(typemin(Int64))
 end
+@testset "converting MaybeSize" begin
+    @test is_size(MaybeSize(0))
+    @test is_size(MaybeSize(typemax(Int64)))
+    @test !is_size(MaybeSize(-1))
+    @test !is_size(MaybeSize(typemin(Int64)))
+
+    @test Int64(MaybeSize(0)) === Int64(0)
+    @test Int64(MaybeSize(typemax(Int64))) === Int64(typemax(Int64))
+    @test_throws InexactError Int64(MaybeSize(-1))
+    @test_throws InexactError Int64(MaybeSize(typemin(Int64)))
+
+    @test convert(Int64, MaybeSize(0)) === Int64(0)
+    @test convert(Int64, MaybeSize(typemax(Int64))) === Int64(typemax(Int64))
+    @test_throws InexactError convert(Int64, MaybeSize(-1))
+    @test_throws InexactError convert(Int64, MaybeSize(typemin(Int64)))
+
+    @test convert(MaybeSize, Int64(0)) === MaybeSize(0)
+    @test convert(MaybeSize, typemax(Int64)) === MaybeSize(typemax(Int64))
+    @test_throws InexactError convert(MaybeSize, Int64(-1))
+    @test_throws InexactError convert(MaybeSize, typemin(Int64))
+
+    @test convert(MaybeSize, nothing) === MaybeSize(typemin(Int64))
+    @test convert(Nothing, MaybeSize(typemin(Int64))) === nothing
+    @test_throws InexactError convert(Nothing, MaybeSize(0))
+    @test_throws InexactError convert(Nothing, MaybeSize(typemax(Int64)))
+    @test_throws InexactError convert(Nothing, MaybeSize(-1))
+end
 @testset "errors" begin
     @test sprint(Base.showerror, DecodedSizeError(1, MaybeSize(2))) == "DecodedSizeError: decoded size: 2 is greater than max size: 1"
     @test sprint(Base.showerror, DecodedSizeError(2, MaybeSize(1))) == "DecodedSizeError: decoded size: 1 is less than expected size: 2"
