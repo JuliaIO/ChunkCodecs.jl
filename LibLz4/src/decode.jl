@@ -43,17 +43,17 @@ end
 
 is_thread_safe(::LZ4FrameDecodeOptions) = true
 
-function try_find_decoded_size(::LZ4FrameDecodeOptions, src::AbstractVector{UInt8})::Nothing
+function try_find_decoded_size(::LZ4FrameDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
     # TODO This might be possible to do using a method similar to ZstdDecodeOptions
     # For now just return nothing
     nothing
 end
 
-function try_decode!(d::LZ4FrameDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::LZ4FrameDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     try_resize_decode!(d, dst, src, Int64(length(dst)))
 end
 
-function try_resize_decode!(d::LZ4FrameDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}
+function try_resize_decode!(d::LZ4FrameDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     src_left::Int64 = src_size
@@ -164,11 +164,11 @@ end
 is_thread_safe(::LZ4BlockDecodeOptions) = true
 
 # There is no header or footer, so always return nothing
-function try_find_decoded_size(::LZ4BlockDecodeOptions, src::AbstractVector{UInt8})::Nothing
+function try_find_decoded_size(::LZ4BlockDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
     nothing
 end
 
-function try_decode!(d::LZ4BlockDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::LZ4BlockDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -196,7 +196,8 @@ function try_decode!(d::LZ4BlockDecodeOptions, dst::AbstractVector{UInt8}, src::
             throw(LZ4DecodingError("actual decoded size > typemax(Int32): $(actual_decoded_len) > $(typemax(Int32))"))
         else
             # Ok to try again with larger dst
-           return nothing
+            # We return a hint with the actual decoded len
+            return MaybeSize(-actual_decoded_len)
         end
     else
         return Int64(ret)
@@ -346,7 +347,7 @@ end
 
 is_thread_safe(::LZ4NumcodecsDecodeOptions) = true
 
-function try_find_decoded_size(::LZ4NumcodecsDecodeOptions, src::AbstractVector{UInt8})::Int64
+function try_find_decoded_size(::LZ4NumcodecsDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
     if length(src) < 4
         throw(LZ4DecodingError("unexpected end of input"))
     else
@@ -362,10 +363,10 @@ function try_find_decoded_size(::LZ4NumcodecsDecodeOptions, src::AbstractVector{
     end
 end
 
-function try_decode!(d::LZ4NumcodecsDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::LZ4NumcodecsDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
-    decoded_size = try_find_decoded_size(d, src)
+    decoded_size::Int64 = try_find_decoded_size(d, src)
     @assert !isnothing(decoded_size)
     src_size::Int64 = length(src)
     if src_size-4 > typemax(Int32)
@@ -423,7 +424,7 @@ end
 
 is_thread_safe(::LZ4HDF5DecodeOptions) = true
 
-function try_find_decoded_size(::LZ4HDF5DecodeOptions, src::AbstractVector{UInt8})::Int64
+function try_find_decoded_size(::LZ4HDF5DecodeOptions, src::AbstractVector{UInt8})::MaybeSize
     if length(src) < 12
         throw(LZ4DecodingError("unexpected end of input"))
     else
@@ -447,10 +448,10 @@ function unsafe_load_i32be(src_p::Ptr{UInt8})::Int32
     r
 end
 
-function try_decode!(d::LZ4HDF5DecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::LZ4HDF5DecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
-    decoded_size = try_find_decoded_size(d, src)
+    decoded_size::Int64 = try_find_decoded_size(d, src)
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     if decoded_size > dst_size

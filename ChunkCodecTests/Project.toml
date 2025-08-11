@@ -1,7 +1,7 @@
 name = "ChunkCodecTests"
 uuid = "06b1ce50-b741-4199-b118-ba5fe1a70fa7"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.1.6"
+version = "0.1.6-dev"
 
 [deps]
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"

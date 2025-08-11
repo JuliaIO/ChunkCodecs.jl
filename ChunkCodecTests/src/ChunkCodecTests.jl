@@ -18,7 +18,6 @@ using ChunkCodecCore:
     try_decode!,
     try_resize_decode!,
     MaybeSize,
-    NOT_SIZE,
     is_size
 
 using Test: Test, @test, @test_throws

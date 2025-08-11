@@ -8,7 +8,9 @@ using ChunkCodecCore:
     DecodeOptions,
     check_in_range,
     check_contiguous,
-    DecodingError
+    DecodingError,
+    MaybeSize,
+    is_size
 import ChunkCodecCore:
     decode_options,
     try_decode!,
@@ -215,7 +217,7 @@ decoded_size_range(e::BShufCodec) = Int64(0):e.element_size:typemax(Int64)-1
 
 encode_bound(::BShufCodec, src_size::Int64)::Int64 = src_size
 
-function try_encode!(e::BShufCodec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BShufCodec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     element_size = e.element_size
@@ -255,7 +257,7 @@ decoded_size_range(x::BShufEncodeOptions) = decoded_size_range(x.codec)
 
 encode_bound(x::BShufEncodeOptions, src_size::Int64)::Int64 = encode_bound(x.codec, src_size)
 
-function try_encode!(x::BShufEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(x::BShufEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     try_encode!(x.codec, dst, src)
 end
 
@@ -281,11 +283,11 @@ end
 
 is_thread_safe(::BShufDecodeOptions) = true
 
-function try_find_decoded_size(::BShufDecodeOptions, src::AbstractVector{UInt8})::Int64
-    length(src)
+function try_find_decoded_size(::BShufDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+    MaybeSize(length(src))
 end
 
-function try_decode!(d::BShufDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::BShufDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     element_size = d.codec.element_size
@@ -295,10 +297,10 @@ function try_decode!(d::BShufDecodeOptions, dst::AbstractVector{UInt8}, src::Abs
         throw(BShufDecodingError("src_size isn't a multiple of element_size"))
     end
     if dst_size < src_size
-        nothing
+        MaybeSize(-src_size)
     else
         apply_blocks!(untrans_bit_elem!, src, dst, element_size, block_size)
-        return src_size
+        src_size
     end
 end
 

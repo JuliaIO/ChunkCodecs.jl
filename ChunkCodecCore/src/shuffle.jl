@@ -57,11 +57,11 @@ function try_encode!(e::ShuffleCodec, dst::AbstractVector{UInt8}, src::AbstractV
     element_size = e.element_size
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < src_size
-        MaybeSize(-src_size)
+        nothing
     else
         if src_size>>1 < element_size || element_size == 1
             copyto!(dst, src)
-            return MaybeSize(src_size)
+            return src_size
         end
         n_elements, n_remainder = fldmod(src_size, element_size)
         @inbounds for i in 0:(element_size-1)
@@ -73,7 +73,7 @@ function try_encode!(e::ShuffleCodec, dst::AbstractVector{UInt8}, src::AbstractV
         for i in 0:(n_remainder-1)
             dst[begin + offset + i] = src[begin + offset + i]
         end
-        return MaybeSize(src_size)
+        return src_size
     end
 end
 

@@ -98,7 +98,7 @@ function encode_bound(e::LZ4FrameEncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::LZ4FrameEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::LZ4FrameEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -158,7 +158,7 @@ function encode_bound(::LZ4BlockEncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::LZ4BlockEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::LZ4BlockEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -228,7 +228,7 @@ function encode_bound(::LZ4NumcodecsEncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::LZ4NumcodecsEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::LZ4NumcodecsEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -309,7 +309,7 @@ function encode_bound(e::LZ4HDF5EncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::LZ4HDF5EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::LZ4HDF5EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)

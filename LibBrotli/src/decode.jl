@@ -38,15 +38,15 @@ end
 # https://github.com/google/brotli/issues/501
 is_thread_safe(::BrotliDecodeOptions) = true
 
-function try_find_decoded_size(::BrotliDecodeOptions, src::AbstractVector{UInt8})::Nothing
+function try_find_decoded_size(::BrotliDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
     nothing
 end
 
-function try_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     try_resize_decode!(d, dst, src, Int64(length(dst)))
 end
 
-function try_resize_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}
+function try_resize_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     src_left::Int64 = src_size

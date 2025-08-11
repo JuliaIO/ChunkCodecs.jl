@@ -1,14 +1,14 @@
 name = "ChunkCodecLibSnappy"
 uuid = "eac87354-86d5-4a5b-ab5f-a6ee56b239b3"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.2.1"
+version = "0.3.0-dev"
 
 [deps]
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
 snappy_jll = "fe1e1685-f7be-5f59-ac9f-4ca204017dfd"
 
 [compat]
-ChunkCodecCore = "0.5"
+ChunkCodecCore = "0.6"
 snappy_jll = "1"
 julia = "1.6"
 

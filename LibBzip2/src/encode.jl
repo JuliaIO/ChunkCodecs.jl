@@ -43,7 +43,7 @@ function encode_bound(::BZ2EncodeOptions, src_size::Int64)::Int64
     clamp(widen(src_size) + widen(src_size>>6 + Int64(601)), Int64)
 end
 
-function try_encode!(e::BZ2EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BZ2EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)

@@ -43,10 +43,10 @@ function try_encode!(e::NoopEncodeOptions, dst::AbstractVector{UInt8}, src::Abst
     src_size::Int64 = length(src)
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < src_size
-        MaybeSize(-src_size)
+        nothing
     else
         copyto!(dst, src)
-        MaybeSize(src_size)
+        src_size
     end
 end
 

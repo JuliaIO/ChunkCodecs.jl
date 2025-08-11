@@ -67,7 +67,7 @@ function decoded_size_range(::BrotliEncodeOptions)
     Int64(0):Int64(1):Int64(0x7ff8007ff8007ff4)
 end
 
-function try_encode!(e::BrotliEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BrotliEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)

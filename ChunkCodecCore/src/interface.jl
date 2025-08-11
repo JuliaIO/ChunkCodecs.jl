@@ -190,7 +190,7 @@ Try to decode `src` into `dst` using decoder `d`.
 Return the size of the decoded output in `dst` if successful.
 
 If `dst` is too small to fit the decoded output, return `NOT_SIZE`.
-If a hint of the size can be found, return `MaybeSize(-hint)`.
+If `dst` is too small but a hint of the required size can be found, return `MaybeSize(-hint)`.
 
 Throw a [`DecodingError`](@ref) if decoding fails because the input data is not valid.
 
@@ -213,7 +213,7 @@ Return the size of the decoded output in `dst` if successful.
 `dst` can be grown using the `resize!` function to any size between one more than the original length of `dst` and `max_size`.
 
 Return `NOT_SIZE` if the size of `dst` is too small to contain the decoded output and cannot be grown due to the `max_size` restriction.
-If a hint of the size can be found, return `MaybeSize(-hint)`.
+If a positive hint of the size can be found, return `MaybeSize(-hint)`.
 
 Precondition: `dst` and `src` do not overlap in memory.
 

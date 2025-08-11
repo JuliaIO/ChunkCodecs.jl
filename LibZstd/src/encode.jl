@@ -73,7 +73,7 @@ function encode_bound(::ZstdEncodeOptions, src_size::Int64)::Int64
     clamp(widen(src_size) + widen(src_size>>8 + margin), Int64)
 end
 
-function try_encode!(e::ZstdEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::ZstdEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)

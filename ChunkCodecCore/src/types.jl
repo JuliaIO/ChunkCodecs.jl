@@ -26,7 +26,7 @@ All `EncodeOptions` have a `codec::Codec` property.
 Required methods for a type `T <: EncodeOptions` to implement:
 - `decoded_size_range(::T)::StepRange{Int64, Int64}`
 - `encode_bound(::T, src_size::Int64)::Int64`
-- `try_encode!(::T, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}`
+- `try_encode!(::T, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize`
 
 Optional methods to implement:
 - `is_thread_safe(::T)::Bool`: defaults to `false`.
@@ -46,11 +46,11 @@ that accept all properties as arguments.
 All `DecodeOptions` have a `codec::Codec` property.
 
 Required methods for a type `T <: DecodeOptions` to implement:
-- `try_find_decoded_size(::T, src::AbstractVector{UInt8})::Union{Nothing, Int64}`
-- `try_decode!(::T, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}`
+- `try_find_decoded_size(::T, src::AbstractVector{UInt8})::MaybeSize`
+- `try_decode!(::T, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize`
 
 Optional methods to implement:
 - `is_thread_safe(::T)::Bool`: defaults to `false`.
-- `try_resize_decode!(::T, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}`: defaults to using `try_decode!` and `try_find_decoded_size`
+- `try_resize_decode!(::T, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize`: defaults to using `try_decode!` and `try_find_decoded_size`
 """
 abstract type DecodeOptions end

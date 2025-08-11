@@ -53,7 +53,7 @@ is_thread_safe(::ZstdDecodeOptions) = true
 # find_decompressed_size is modified from CodecZstd.jl
 # https://github.com/JuliaIO/CodecZstd.jl/blob/2f7d084b8b157d83ed85e9d15105f0a708038e45/src/libzstd.jl#L157C1-L215C4
 # From mkitti's PR https://github.com/JuliaIO/CodecZstd.jl/pull/63
-function try_find_decoded_size(::ZstdDecodeOptions, src::AbstractVector{UInt8})::Union{Nothing, Int64}
+function try_find_decoded_size(::ZstdDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
     check_contiguous(src)
     srcSize::Int64 = length(src)
     frameOffset::Int64 = 0
@@ -98,7 +98,7 @@ function try_find_decoded_size(::ZstdDecodeOptions, src::AbstractVector{UInt8}):
     return decompressedSize
 end
 
-function try_decode!(d::ZstdDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::ZstdDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     if isempty(src)

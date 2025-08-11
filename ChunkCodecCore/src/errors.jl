@@ -10,30 +10,49 @@ abstract type DecodingError <: Exception end
         val::Int64
     end
 
-If `val ≥ 0` this represents a size, and can be converted to `Int64`.
-If `val == typemin(Int64)` this is not a size and will error when.
-Otherwise will error when converted to `Int64`.
+If `val ≥ 0` this represents a size, and can be converted back and forth with `Int64`.
+Otherwise will error when converted to and from `Int64`.
 `-val` is a size hint if not `typemin(Int64)`.
+
+`nothing` can be converted to and from `MaybeSize(typemin(Int64))`
 """
 struct MaybeSize
     val::Int64
 end
+"""
+    const NOT_SIZE = MaybeSize(typemin(Int64))
+"""
+const NOT_SIZE = MaybeSize(typemin(Int64))
 function is_size(x::MaybeSize)::Bool
     !signbit(x.val)
 end
-function Int64(x::MaybeSize)::Int64
+function Int64(x::MaybeSize)
     if !is_size(x)
         throw(InexactError(:Int64, Int64, x))
     else
         x.val
     end
 end
-function Base.convert(::Type{Int64}, x::MaybeSize)::Int64
+function Base.convert(::Type{Int64}, x::MaybeSize)
     Int64(x)
 end
-
-const NOT_SIZE = MaybeSize(typemin(Int64))
-
+function Base.convert(::Type{MaybeSize}, x::Int64)::MaybeSize
+    if signbit(x)
+        throw(InexactError(:convert, MaybeSize, x))
+    else
+        MaybeSize(x)
+    end
+end
+function Base.convert(::Type{MaybeSize}, x::Nothing)::MaybeSize
+    NOT_SIZE
+end
+function Base.convert(::Type{Nothing}, x::MaybeSize)::Nothing
+    if x !== NOT_SIZE
+        throw(InexactError(:convert, Nothing, x))
+    else
+        nothing
+    end
+end
 
 """
     struct DecodedSizeError <: Exception
@@ -50,7 +69,7 @@ end
 
 function Base.showerror(io::IO, err::DecodedSizeError)
     print(io, "DecodedSizeError: ")
-    if err.decoded_size == NOT_SIZE
+    if err.decoded_size === NOT_SIZE
         print(io, "decoded size is greater than max size: ")
         print(io, err.max_size)
     elseif !is_size(err.decoded_size)
