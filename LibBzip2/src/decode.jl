@@ -46,7 +46,7 @@ function BZ2DecodeOptions(;
 end
 is_thread_safe(::BZ2DecodeOptions) = true
 
-function try_find_decoded_size(::BZ2DecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(::BZ2DecodeOptions, src::AbstractVector{UInt8})::Nothing
     nothing
 end
 
@@ -104,7 +104,7 @@ function try_resize_decode!(d::BZ2DecodeOptions, dst::AbstractVector{UInt8}, src
                         elseif iszero(dst_left) # needs more output
                             local next_size = grow_dst!(dst, max_size)
                             if isnothing(next_size)
-                                return nothing
+                                return NOT_SIZE
                             end
                             dst_left += next_size - dst_size
                             dst_size = next_size

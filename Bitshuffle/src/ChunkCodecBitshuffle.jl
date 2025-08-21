@@ -10,6 +10,7 @@ using ChunkCodecCore:
     check_contiguous,
     DecodingError,
     MaybeSize,
+    NOT_SIZE,
     is_size
 import ChunkCodecCore:
     decode_options,
@@ -224,10 +225,10 @@ function try_encode!(e::BShufCodec, dst::AbstractVector{UInt8}, src::AbstractVec
     block_size = e.block_size
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < src_size
-        nothing
+        NOT_SIZE
     else
         apply_blocks!(trans_bit_elem!, src, dst, element_size, block_size)
-        return src_size
+        src_size
     end
 end
 
@@ -283,8 +284,8 @@ end
 
 is_thread_safe(::BShufDecodeOptions) = true
 
-function try_find_decoded_size(::BShufDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
-    MaybeSize(length(src))
+function try_find_decoded_size(::BShufDecodeOptions, src::AbstractVector{UInt8})::Int64
+    length(src)
 end
 
 function try_decode!(d::BShufDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
@@ -297,7 +298,7 @@ function try_decode!(d::BShufDecodeOptions, dst::AbstractVector{UInt8}, src::Abs
         throw(BShufDecodingError("src_size isn't a multiple of element_size"))
     end
     if dst_size < src_size
-        MaybeSize(-src_size)
+        NOT_SIZE
     else
         apply_blocks!(untrans_bit_elem!, src, dst, element_size, block_size)
         src_size

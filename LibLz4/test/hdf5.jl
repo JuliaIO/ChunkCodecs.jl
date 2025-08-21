@@ -51,7 +51,7 @@ end
     # less than 12 bytes
     @test_throws LZ4DecodingError("unexpected end of input") try_find_decoded_size(d, UInt8[])
     @test_throws LZ4DecodingError("decoded size is negative") try_find_decoded_size(d, fill(0xFF,12))
-    @test typemax(Int64) == Int64(try_find_decoded_size(d, [0x7F; fill(0xFF, 11);]))
+    @test typemax(Int64) == try_find_decoded_size(d, [0x7F; fill(0xFF, 11);])
     # invalid block size
     @test_throws LZ4DecodingError("block size must be greater than zero") decode(d, [
         reinterpret(UInt8, [hton(Int64(0))]);

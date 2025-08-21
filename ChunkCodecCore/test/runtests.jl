@@ -56,12 +56,6 @@ end
     @test convert(MaybeSize, typemax(Int64)) === MaybeSize(typemax(Int64))
     @test_throws InexactError convert(MaybeSize, Int64(-1))
     @test_throws InexactError convert(MaybeSize, typemin(Int64))
-
-    @test convert(MaybeSize, nothing) === MaybeSize(typemin(Int64))
-    @test convert(Nothing, MaybeSize(typemin(Int64))) === nothing
-    @test_throws InexactError convert(Nothing, MaybeSize(0))
-    @test_throws InexactError convert(Nothing, MaybeSize(typemax(Int64)))
-    @test_throws InexactError convert(Nothing, MaybeSize(-1))
 end
 @testset "errors" begin
     @test sprint(Base.showerror, DecodedSizeError(1, MaybeSize(2))) == "DecodedSizeError: decoded size: 2 is greater than max size: 1"
@@ -108,7 +102,7 @@ function TestDecodeOptions(;
     )
     TestDecodeOptions(codec)
 end
-ChunkCodecCore.try_find_decoded_size(::TestDecodeOptions, src::AbstractVector{UInt8}) = NOT_SIZE
+ChunkCodecCore.try_find_decoded_size(::TestDecodeOptions, src::AbstractVector{UInt8}) = nothing
 function ChunkCodecCore.try_decode!(::TestDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
@@ -134,7 +128,7 @@ function RandHintDecodeOptions(;
     )
     RandHintDecodeOptions(codec)
 end
-ChunkCodecCore.try_find_decoded_size(::RandHintDecodeOptions, src::AbstractVector{UInt8}) = NOT_SIZE
+ChunkCodecCore.try_find_decoded_size(::RandHintDecodeOptions, src::AbstractVector{UInt8}) = nothing
 function ChunkCodecCore.try_decode!(::RandHintDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)

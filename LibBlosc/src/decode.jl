@@ -33,7 +33,7 @@ function BloscDecodeOptions(;
     BloscDecodeOptions(codec)
 end
 
-function try_find_decoded_size(::BloscDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(::BloscDecodeOptions, src::AbstractVector{UInt8})::Int64
     check_contiguous(src)
     nbytes = Ref(Csize_t(0))
     ret = ccall((:blosc_cbuffer_validate, libblosc), Cint,
@@ -56,7 +56,7 @@ function try_decode!(d::BloscDecodeOptions, dst::AbstractVector{UInt8}, src::Abs
     nbytes::Int64 = try_find_decoded_size(d, src)
     dst_size::Int64 = length(dst)
     if nbytes > dst_size
-        nothing
+        NOT_SIZE
     else
         numinternalthreads = 1
         sz = ccall((:blosc_decompress_ctx, libblosc), Cint,

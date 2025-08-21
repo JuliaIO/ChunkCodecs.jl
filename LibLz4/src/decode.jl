@@ -43,7 +43,7 @@ end
 
 is_thread_safe(::LZ4FrameDecodeOptions) = true
 
-function try_find_decoded_size(::LZ4FrameDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(::LZ4FrameDecodeOptions, src::AbstractVector{UInt8})::Nothing
     # TODO This might be possible to do using a method similar to ZstdDecodeOptions
     # For now just return nothing
     nothing
@@ -110,7 +110,7 @@ function try_resize_decode!(d::LZ4FrameDecodeOptions, dst::AbstractVector{UInt8}
                             if iszero(dst_left) # needs more output
                                 local next_size = grow_dst!(dst, max_size)
                                 if isnothing(next_size)
-                                    return nothing
+                                    return NOT_SIZE
                                 end
                                 dst_left += next_size - dst_size
                                 dst_size = next_size
@@ -164,7 +164,7 @@ end
 is_thread_safe(::LZ4BlockDecodeOptions) = true
 
 # There is no header or footer, so always return nothing
-function try_find_decoded_size(::LZ4BlockDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(::LZ4BlockDecodeOptions, src::AbstractVector{UInt8})::Nothing
     nothing
 end
 
@@ -347,7 +347,7 @@ end
 
 is_thread_safe(::LZ4NumcodecsDecodeOptions) = true
 
-function try_find_decoded_size(::LZ4NumcodecsDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(::LZ4NumcodecsDecodeOptions, src::AbstractVector{UInt8})::Int64
     if length(src) < 4
         throw(LZ4DecodingError("unexpected end of input"))
     else
@@ -374,7 +374,7 @@ function try_decode!(d::LZ4NumcodecsDecodeOptions, dst::AbstractVector{UInt8}, s
     src_size32 = (src_size-4)%Int32
     dst_size::Int64 = length(dst)
     if decoded_size > dst_size
-        nothing
+        return NOT_SIZE
     else
         cconv_src = Base.cconvert(Ptr{UInt8}, src)
         cconv_dst = Base.cconvert(Ptr{UInt8}, dst)
@@ -423,7 +423,7 @@ end
 
 is_thread_safe(::LZ4HDF5DecodeOptions) = true
 
-function try_find_decoded_size(::LZ4HDF5DecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(::LZ4HDF5DecodeOptions, src::AbstractVector{UInt8})::Int64
     if length(src) < 12
         throw(LZ4DecodingError("unexpected end of input"))
     else
@@ -454,7 +454,7 @@ function try_decode!(d::LZ4HDF5DecodeOptions, dst::AbstractVector{UInt8}, src::A
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     if decoded_size > dst_size
-        return nothing
+        return NOT_SIZE
     end
     cconv_src = Base.cconvert(Ptr{UInt8}, src)
     cconv_dst = Base.cconvert(Ptr{UInt8}, dst)

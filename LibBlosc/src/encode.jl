@@ -82,7 +82,7 @@ function try_encode!(e::BloscEncodeOptions, dst::AbstractVector{UInt8}, src::Abs
         e.clevel, e.doshuffle, e.typesize, src_size, src, dst, dst_size, e.compressor, blocksize, numinternalthreads
     )
     if sz == 0
-        nothing
+        NOT_SIZE
     elseif sz < 0
         error("Internal Blosc error: $(sz). This
             should never happen.  If you see this, please report it back

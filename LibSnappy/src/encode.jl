@@ -42,7 +42,7 @@ function try_encode!(e::SnappyEncodeOptions, dst::AbstractVector{UInt8}, src::Ab
     check_in_range(decoded_size_range(e); src_size)
     ebound = encode_bound(e, src_size)
     if dst_size < ebound
-        return nothing
+        return NOT_SIZE
     end
     compressed_length = Ref(Csize_t(ebound))
     status = ccall((:snappy_compress, libsnappy), Cint,

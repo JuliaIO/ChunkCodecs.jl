@@ -95,9 +95,9 @@ function test_encoder_decoder(e, d; trials=100)
             @test !is_size(try_encode!(e, zeros(UInt8, length(encoded)-1), data))
         end
         local ds = try_find_decoded_size(d, encoded)
-        @test ds isa MaybeSize
-        if is_size(ds)
-            @test Int64(ds) === s
+        @test ds isa Union{Nothing, Int64}
+        if !isnothing(ds)
+            @test ds === s
         end
         local dst = zeros(UInt8, s)
         @test try_decode!(d, dst, encoded) === MaybeSize(s)

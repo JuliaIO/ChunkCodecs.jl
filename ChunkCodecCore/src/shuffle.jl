@@ -57,7 +57,7 @@ function try_encode!(e::ShuffleCodec, dst::AbstractVector{UInt8}, src::AbstractV
     element_size = e.element_size
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < src_size
-        nothing
+        NOT_SIZE
     else
         if src_size>>1 < element_size || element_size == 1
             copyto!(dst, src)
@@ -129,8 +129,8 @@ end
 
 is_thread_safe(::ShuffleDecodeOptions) = true
 
-function try_find_decoded_size(::ShuffleDecodeOptions, src::AbstractVector{UInt8})
-    MaybeSize(length(src))
+function try_find_decoded_size(::ShuffleDecodeOptions, src::AbstractVector{UInt8})::Int64
+    length(src)
 end
 
 function try_decode!(d::ShuffleDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
@@ -138,7 +138,7 @@ function try_decode!(d::ShuffleDecodeOptions, dst::AbstractVector{UInt8}, src::A
     src_size::Int64 = length(src)
     element_size = d.codec.element_size
     if dst_size < src_size
-        MaybeSize(-src_size)
+        NOT_SIZE
     else
         if src_size>>1 < element_size || element_size == 1
             copyto!(dst, src)

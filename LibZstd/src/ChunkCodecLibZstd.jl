@@ -9,8 +9,8 @@ using ChunkCodecCore:
     check_contiguous,
     check_in_range,
     DecodingError,
-    MaybeSize
-
+    MaybeSize,
+    NOT_SIZE
 import ChunkCodecCore:
     can_concatenate,
     try_decode!,

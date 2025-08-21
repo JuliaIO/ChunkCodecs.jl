@@ -14,7 +14,6 @@ If `val ≥ 0` this represents a size, and can be converted back and forth with 
 Otherwise will error when converted to and from `Int64`.
 `-val` is a size hint if not `typemin(Int64)`.
 
-`nothing` can be converted to and from `MaybeSize(typemin(Int64))`
 """
 struct MaybeSize
     val::Int64
@@ -41,16 +40,6 @@ function Base.convert(::Type{MaybeSize}, x::Int64)::MaybeSize
         throw(InexactError(:convert, MaybeSize, x))
     else
         MaybeSize(x)
-    end
-end
-function Base.convert(::Type{MaybeSize}, x::Nothing)::MaybeSize
-    NOT_SIZE
-end
-function Base.convert(::Type{Nothing}, x::MaybeSize)::Nothing
-    if x !== NOT_SIZE
-        throw(InexactError(:convert, Nothing, x))
-    else
-        nothing
     end
 end
 

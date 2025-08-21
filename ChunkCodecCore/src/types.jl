@@ -46,7 +46,7 @@ that accept all properties as arguments.
 All `DecodeOptions` have a `codec::Codec` property.
 
 Required methods for a type `T <: DecodeOptions` to implement:
-- `try_find_decoded_size(::T, src::AbstractVector{UInt8})::MaybeSize`
+- `try_find_decoded_size(::T, src::AbstractVector{UInt8})::Union{Nothing, Int64}`
 - `try_decode!(::T, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize`
 
 Optional methods to implement:

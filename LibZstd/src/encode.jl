@@ -103,7 +103,7 @@ function try_encode!(e::ZstdEncodeOptions, dst::AbstractVector{UInt8}, src::Abst
         if ZSTD_isError(ret)
             err_code = ZSTD_getErrorCode(ret)
             if err_code == Integer(ZSTD_error_dstSize_tooSmall)
-                return nothing
+                return NOT_SIZE
             elseif err_code == Integer(ZSTD_error_memory_allocation)
                 throw(OutOfMemoryError())
             else

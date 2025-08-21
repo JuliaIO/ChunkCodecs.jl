@@ -10,7 +10,8 @@ using ChunkCodecCore:
     check_contiguous,
     grow_dst!,
     DecodingError,
-    MaybeSize
+    MaybeSize,
+    NOT_SIZE
 import ChunkCodecCore:
     decode_options,
     can_concatenate,

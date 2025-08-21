@@ -127,7 +127,7 @@ function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::A
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < 12
-        return nothing
+        return NOT_SIZE
     end
     elem_size = e.codec.element_size
     # This get used to write to the header
@@ -155,7 +155,7 @@ function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::A
     # The leftover bytes are copied at the end if needed.
     while src_left ≥ BLOCKED_MULT*elem_size
         if dst_left < 4
-            return nothing # no space for block header
+            return NOT_SIZE # no space for block header
         end
         if src_left < block_size*elem_size
             block_size = fld(src_left, BLOCKED_MULT*elem_size) * BLOCKED_MULT
@@ -168,7 +168,7 @@ function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::A
             @view(tmp_buf_bshuf[begin:begin+elem_size*block_size-1])
         )::MaybeSize
         if !is_size(maybe_compressed_nbytes)
-            return nothing # no space for compressed block
+            return NOT_SIZE # no space for compressed block
         end
         compressed_nbytes = Int64(maybe_compressed_nbytes)
         store_int32_BE!(dst, dst_size - dst_left, Int32(compressed_nbytes))
@@ -178,7 +178,7 @@ function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::A
         @assert src_left ∈ 0:src_size
     end
     if src_left > dst_left
-        return nothing # no space for leftover bytes
+        return NOT_SIZE # no space for leftover bytes
     end
     src_offset = src_size - src_left
     dst_offset = dst_size - dst_left
@@ -227,7 +227,7 @@ end
 
 is_thread_safe(d::BShufLZDecodeOptions) = is_thread_safe(d.options)
 
-function try_find_decoded_size(d::BShufLZDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(d::BShufLZDecodeOptions, src::AbstractVector{UInt8})::Int64
     if length(src) < 12
         throw(BShufDecodingError("unexpected end of input"))
     else
@@ -249,7 +249,7 @@ function try_decode!(d::BShufLZDecodeOptions, dst::AbstractVector{UInt8}, src::A
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     if decoded_size > dst_size
-        return nothing
+        return NOT_SIZE
     end
     src_left::Int64 = src_size
     dst_left::Int64 = decoded_size

@@ -33,7 +33,7 @@ function SnappyDecodeOptions(;
     SnappyDecodeOptions(codec)
 end
 
-function try_find_decoded_size(::SnappyDecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(::SnappyDecodeOptions, src::AbstractVector{UInt8})::Int64
     check_contiguous(src)
     nbytes = Ref(Csize_t(0))
     ret = ccall((:snappy_uncompressed_length, libsnappy), Cint,
@@ -56,7 +56,7 @@ function try_decode!(d::SnappyDecodeOptions, dst::AbstractVector{UInt8}, src::Ab
     src_size::Int64 = length(src)
     nbytes::Int64 = try_find_decoded_size(d, src)
     if dst_size < nbytes
-        nothing
+        NOT_SIZE
     else
         uncompressed_length = Ref(Csize_t(nbytes))
         status = ccall((:snappy_uncompress, libsnappy), Cint,

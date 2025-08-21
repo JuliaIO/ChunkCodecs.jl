@@ -33,7 +33,7 @@ function SzipHDF5DecodeOptions(;
     SzipHDF5DecodeOptions(codec)
 end
 
-function try_find_decoded_size(::SzipHDF5DecodeOptions, src::AbstractVector{UInt8})::MaybeSize
+function try_find_decoded_size(::SzipHDF5DecodeOptions, src::AbstractVector{UInt8})::Int64
     if length(src) < 4
         throw(SzipDecodingError("unexpected end of input"))
     else
@@ -52,7 +52,7 @@ function try_decode!(d::SzipHDF5DecodeOptions, dst::AbstractVector{UInt8}, src::
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     if decoded_size > dst_size
-        nothing
+        return NOT_SIZE
     else
         cconv_src = Base.cconvert(Ptr{UInt8}, src)
         cconv_dst = Base.cconvert(Ptr{UInt8}, dst)

@@ -169,15 +169,15 @@ Return `true` if the encoder is lossless.
 is_lossless(::Any) = true
 
 """
-    try_find_decoded_size(d, src::AbstractVector{UInt8})::MaybeSize
+    try_find_decoded_size(d, src::AbstractVector{UInt8})::Union{Nothing, Int64}
 
 Try to return the size of the decoded output of `src` using `d`.
 
-If the size cannot be quickly determined, return `NOT_SIZE`.
+If the size cannot be quickly determined, return `nothing`.
 
 If the encoded data is found to be invalid, throw a `DecodingError`.
 
-If a `is_size` size is returned, it must be the exact size of the decoded output.
+If an `Int64` is returned, it must be the exact size of the decoded output.
 If [`try_decode!`](@ref) is called with a `dst` of this size, it must succeed and return the same size, or throw an error.
 """
 function try_find_decoded_size end
@@ -221,8 +221,8 @@ All of `dst` can be written to or used as scratch space by the decoder.
 Only the initial returned number of bytes are valid output.
 """
 function try_resize_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize
-    maybe_decoded_size = try_find_decoded_size(d, src)::MaybeSize
-    if !is_size(maybe_decoded_size)
+    maybe_decoded_size = try_find_decoded_size(d, src)::Union{Nothing, Int64}
+    if isnothing(maybe_decoded_size)
         while true
             ds = try_decode!(d, dst, src)::MaybeSize
             if !is_size(ds)

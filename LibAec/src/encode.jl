@@ -54,7 +54,7 @@ function try_encode!(e::SzipHDF5Codec, dst::AbstractVector{UInt8}, src::Abstract
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < 4
-        return nothing
+        return NOT_SIZE
     end
     cconv_src = Base.cconvert(Ptr{UInt8}, src)
     cconv_dst = Base.cconvert(Ptr{UInt8}, dst)
@@ -88,7 +88,7 @@ function try_encode!(e::SzipHDF5Codec, dst::AbstractVector{UInt8}, src::Abstract
     elseif ret == SZ_MEM_ERROR
         throw(OutOfMemoryError())
     elseif ret == SZ_OUTBUFF_FULL
-        return nothing
+        return NOT_SIZE
     elseif ret == SZ_PARAM_ERROR
         throw(ArgumentError("invalid szip parameters"))
     else
