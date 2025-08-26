@@ -58,10 +58,10 @@ end
     @test_throws InexactError convert(MaybeSize, typemin(Int64))
 end
 @testset "errors" begin
-    @test sprint(Base.showerror, DecodedSizeError(1, MaybeSize(2))) == "DecodedSizeError: decoded size: 2 is greater than max size: 1"
-    @test sprint(Base.showerror, DecodedSizeError(2, MaybeSize(1))) == "DecodedSizeError: decoded size: 1 is less than expected size: 2"
-    @test sprint(Base.showerror, DecodedSizeError(1, NOT_SIZE)) == "DecodedSizeError: decoded size is greater than max size: 1"
-    @test sprint(Base.showerror, DecodedSizeError(1, MaybeSize(-10))) == "DecodedSizeError: decoded size is greater than max size: 1 decoder hints to try with 10 bytes"
+    @test sprint(Base.showerror, DecodedSizeError(1, MaybeSize(2))) == "DecodedSizeError: decoded size 2 > 1"
+    @test sprint(Base.showerror, DecodedSizeError(2, MaybeSize(1))) == "DecodedSizeError: decoded size 1 < expected 2"
+    @test sprint(Base.showerror, DecodedSizeError(1, NOT_SIZE)) == "DecodedSizeError: decoded size > 1"
+    @test sprint(Base.showerror, DecodedSizeError(1, MaybeSize(-10))) == "DecodedSizeError: decoded size > 1, try max_size = 10"
 end
 @testset "check helpers" begin
     @test_throws Exception ChunkCodecCore.check_contiguous(@view(zeros(UInt8, 8)[1:2:end]))
