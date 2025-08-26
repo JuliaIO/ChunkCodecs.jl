@@ -1,7 +1,7 @@
 name = "ChunkCodecCore"
 uuid = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.6.0-dev"
+version = "0.6.0"
 
 [compat]
 julia = "1.6"

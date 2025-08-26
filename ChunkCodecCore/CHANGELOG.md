@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v0.6.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v0.6.0) - 2025-08-26
+
 ### BREAKING `can_concatenate` is now a decoder method instead of a `Codec` method [#73](https://github.com/JuliaIO/ChunkCodecs.jl/pull/73)
 
 ### BREAKING the return type of `try_encode`, `try_decode`, and `try_resize_decode!` changed to a new `MaybeSize` type [#72](https://github.com/JuliaIO/ChunkCodecs.jl/pull/72)
