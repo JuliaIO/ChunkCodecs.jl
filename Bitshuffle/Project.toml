@@ -1,7 +1,7 @@
 name = "ChunkCodecBitshuffle"
 uuid = "1d859bbf-6282-4c80-a370-34c59bf7ec11"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.2.0-dev"
+version = "0.2.0"
 
 [deps]
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
