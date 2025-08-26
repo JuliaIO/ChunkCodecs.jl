@@ -45,6 +45,7 @@ function BZ2DecodeOptions(;
     BZ2DecodeOptions(codec)
 end
 is_thread_safe(::BZ2DecodeOptions) = true
+can_concatenate(::BZ2DecodeOptions) = true
 
 function try_find_decoded_size(::BZ2DecodeOptions, src::AbstractVector{UInt8})::Nothing
     nothing

@@ -5,6 +5,7 @@
 /.vscode/
 
 Manifest.toml
+Manifest-*.toml
 fixture.tar.gz
 fixture
 .CondaPkg

@@ -43,6 +43,8 @@ end
 
 is_thread_safe(::LZ4FrameDecodeOptions) = true
 
+can_concatenate(::LZ4FrameDecodeOptions) = true
+
 function try_find_decoded_size(::LZ4FrameDecodeOptions, src::AbstractVector{UInt8})::Nothing
     # TODO This might be possible to do using a method similar to ZstdDecodeOptions
     # For now just return nothing

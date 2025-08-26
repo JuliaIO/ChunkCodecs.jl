@@ -50,6 +50,8 @@ end
 
 is_thread_safe(::ZstdDecodeOptions) = true
 
+can_concatenate(::ZstdDecodeOptions) = true
+
 # find_decompressed_size is modified from CodecZstd.jl
 # https://github.com/JuliaIO/CodecZstd.jl/blob/2f7d084b8b157d83ed85e9d15105f0a708038e45/src/libzstd.jl#L157C1-L215C4
 # From mkitti's PR https://github.com/JuliaIO/CodecZstd.jl/pull/63

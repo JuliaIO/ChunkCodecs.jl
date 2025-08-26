@@ -80,6 +80,8 @@ function GzipDecodeOptions(;
     GzipDecodeOptions(codec)
 end
 
+can_concatenate(::GzipDecodeOptions) = true
+
 const _AllDecodeOptions = Union{ZlibDecodeOptions, DeflateDecodeOptions, GzipDecodeOptions}
 
 is_thread_safe(::_AllDecodeOptions) = true
@@ -103,7 +105,7 @@ function try_resize_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, sr
     end
     cconv_src = Base.cconvert(Ptr{UInt8}, src)
     # This outer loop is to decode a concatenation of multiple compressed streams.
-    # If `can_concatenate(d.codec)` is false, this outer loop doesn't rerun.
+    # If `can_concatenate(d)` is false, this outer loop doesn't rerun.
     while true
         stream = ZStream()
         inflateInit2(stream, _windowBits(d.codec))
@@ -166,8 +168,8 @@ function try_resize_decode!(d::_AllDecodeOptions, dst::AbstractVector{UInt8}, sr
                             @assert real_dst_size ∈ 0:length(dst)
                             return real_dst_size
                         else
-                            if can_concatenate(d.codec)
-                                # try and decompress next stream if the codec can_concatenate
+                            if can_concatenate(d)
+                                # try and decompress next stream if the decoder can_concatenate
                                 # there must be progress
                                 @assert stream.avail_in < start_avail_in || stream.avail_out < start_avail_out
                                 break

@@ -50,8 +50,6 @@ struct BZ2Codec <: Codec
 end
 decode_options(::BZ2Codec) = BZ2DecodeOptions()
 
-can_concatenate(::BZ2Codec) = true
-
 include("encode.jl")
 include("decode.jl")
 

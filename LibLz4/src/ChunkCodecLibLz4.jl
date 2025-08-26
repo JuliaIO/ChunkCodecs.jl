@@ -65,7 +65,6 @@ See also [`LZ4FrameEncodeOptions`](@ref) and [`LZ4FrameDecodeOptions`](@ref)
 struct LZ4FrameCodec <: Codec
 end
 decode_options(::LZ4FrameCodec) = LZ4FrameDecodeOptions() # default decode options
-can_concatenate(::LZ4FrameCodec) = true
 
 """
     struct LZ4BlockCodec <: Codec

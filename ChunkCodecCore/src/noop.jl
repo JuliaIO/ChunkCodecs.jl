@@ -9,7 +9,6 @@ Copies the input.
 See also [`NoopEncodeOptions`](@ref) and [`NoopDecodeOptions`](@ref)
 """
 struct NoopCodec <: Codec end
-can_concatenate(::NoopCodec) = true
 decode_options(::NoopCodec) = NoopDecodeOptions() # default decode options
 
 """
@@ -71,6 +70,8 @@ function NoopDecodeOptions(;
 end
 
 is_thread_safe(::NoopDecodeOptions) = true
+
+can_concatenate(::NoopDecodeOptions) = true
 
 function try_find_decoded_size(::NoopDecodeOptions, src::AbstractVector{UInt8})::Int64
     length(src)

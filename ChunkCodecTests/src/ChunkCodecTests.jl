@@ -27,6 +27,7 @@ export test_codec, test_encoder_decoder, rand_test_data
 function test_codec(c::Codec, e::EncodeOptions, d::DecodeOptions; trials=100)
     @test decode_options(c) isa DecodeOptions
     @test can_concatenate(c) isa Bool
+    @test can_concatenate(d) isa Bool
     @test e.codec == c
     @test d.codec == c
     @test is_thread_safe(e) isa Bool
@@ -39,15 +40,6 @@ function test_codec(c::Codec, e::EncodeOptions, d::DecodeOptions; trials=100)
     @test typeof(d)(;NamedTuple{d_props}(getproperty.((d,), d_props))...) == d
 
     test_encoder_decoder(e, d; trials)
-
-    # can_concatenate tests
-    if can_concatenate(c)
-        srange = decoded_size_range(e)
-        a = rand(UInt8, 100*step(srange))
-        b = rand(UInt8, 200*step(srange))
-        @test decode(d, [encode(e, a); encode(e, b);]) == [a; b;]
-        @test decode(d, [encode(e, UInt8[]); encode(e, UInt8[]);]) == UInt8[]
-    end
 end
 
 function test_encoder_decoder(e, d; trials=100)
@@ -140,6 +132,15 @@ function test_encoder_decoder(e, d; trials=100)
         @test dst_buffer[end] == 0x00
 
         @test decode(d, encoded) == data
+    end
+
+    # can_concatenate tests
+    if can_concatenate(d)
+        srange = decoded_size_range(e)
+        a = rand(UInt8, 100*step(srange))
+        b = rand(UInt8, 200*step(srange))
+        @test decode(d, [encode(e, a); encode(e, b);]) == [a; b;]
+        @test decode(d, [encode(e, UInt8[]); encode(e, UInt8[]);]) == UInt8[]
     end
 end
 
