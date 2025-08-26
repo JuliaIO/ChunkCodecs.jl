@@ -34,7 +34,7 @@ function encode_bound(e::SnappyEncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::SnappyEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::SnappyEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -42,7 +42,7 @@ function try_encode!(e::SnappyEncodeOptions, dst::AbstractVector{UInt8}, src::Ab
     check_in_range(decoded_size_range(e); src_size)
     ebound = encode_bound(e, src_size)
     if dst_size < ebound
-        return nothing
+        return NOT_SIZE
     end
     compressed_length = Ref(Csize_t(ebound))
     status = ccall((:snappy_compress, libsnappy), Cint,

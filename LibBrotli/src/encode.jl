@@ -67,7 +67,7 @@ function decoded_size_range(::BrotliEncodeOptions)
     Int64(0):Int64(1):Int64(0x7ff8007ff8007ff4)
 end
 
-function try_encode!(e::BrotliEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BrotliEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -81,7 +81,7 @@ function try_encode!(e::BrotliEncodeOptions, dst::AbstractVector{UInt8}, src::Ab
     clamped_dst_size = min(dst_size, max_out_size)
     if iszero(dst_size)
         # Output buffer needs at least one byte.
-        return nothing
+        return NOT_SIZE
     end
     cconv_src = Base.cconvert(Ptr{UInt8}, src)
     cconv_dst = Base.cconvert(Ptr{UInt8}, dst)
@@ -142,7 +142,7 @@ function try_encode!(e::BrotliEncodeOptions, dst::AbstractVector{UInt8}, src::Ab
                     if dst_size ≥ max_out_size
                         return unsafe_MakeUncompressedStream(src_p, src_size, dst_p)
                     else
-                        return nothing
+                        return NOT_SIZE
                     end
                 end
             else

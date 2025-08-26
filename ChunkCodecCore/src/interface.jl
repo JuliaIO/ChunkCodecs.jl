@@ -5,7 +5,7 @@ Encode the input vector `src` using encoder `e`.
 `e` must implement [`decoded_size_range`](@ref),
 [`encode_bound`](@ref), and [`try_encode!`](@ref).
 
-Throw an error if `length(src)` is not in `decoded_size_range(e)`
+Throw an error if `length(src)` is not in `decoded_size_range(e)`.
 
 Otherwise throw an error.
 
@@ -13,16 +13,17 @@ See also [`EncodeOptions`](@ref) and [`decode`](@ref).
 """
 function encode(e, src::AbstractVector{UInt8})::Vector{UInt8}
     src_size::Int64 = length(src)
-    check_in_range(decoded_size_range(e); src_size)
-    dst_size::Int64 = encode_bound(e, src_size)
-    @assert !signbit(dst_size)
-    dst = Vector{UInt8}(undef, dst_size)
-    real_dst_size = something(try_encode!(e, dst, src))
-    @assert real_dst_size ∈ 0:dst_size
-    if real_dst_size < dst_size
+    check_in_range(decoded_size_range(e)::StepRange{Int64, Int64}; src_size)
+    dst_size_bound = encode_bound(e, src_size)::Int64
+    if dst_size_bound == typemax(Int64)
+        throw(ArgumentError("`encode_bound(e, $(src_size))` saturated"))
+    end
+    dst = Vector{UInt8}(undef, dst_size_bound)
+    real_dst_size = Int64(try_encode!(e, dst, src)::MaybeSize)
+    @assert real_dst_size ∈ 0:dst_size_bound
+    if real_dst_size < dst_size_bound
         resize!(dst, real_dst_size)
     end
-    @assert real_dst_size == length(dst)
     dst
 end
 
@@ -51,14 +52,15 @@ function decode(
     )::Vector{UInt8}
     _clamp_max_size::Int64 = clamp(max_size, Int64)
     if _clamp_max_size < Int64(0)
-        throw(DecodedSizeError(_clamp_max_size, nothing))
+        throw(DecodedSizeError(_clamp_max_size, NOT_SIZE))
     end
     _clamp_size_hint::Int64 = clamp(size_hint, Int64(0), _clamp_max_size)
     dst = Vector{UInt8}(undef, _clamp_size_hint)
-    real_dst_size = try_resize_decode!(d, dst, src, _clamp_max_size)::Union{Nothing, Int64}
-    if isnothing(real_dst_size)
-        throw(DecodedSizeError(_clamp_max_size, try_find_decoded_size(d, src)))
+    maybe_dst_size = try_resize_decode!(d, dst, src, _clamp_max_size)::MaybeSize
+    if !is_size(maybe_dst_size)
+        throw(DecodedSizeError(_clamp_max_size, maybe_dst_size))
     end
+    real_dst_size = Int64(maybe_dst_size)
     @assert real_dst_size ∈ 0:_clamp_max_size
     @assert real_dst_size ≤ length(dst)
     resize!(dst, real_dst_size)
@@ -83,8 +85,8 @@ See also [`decode`](@ref) and [`encode`](@ref)
 """
 function decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8})
     expected_size::Int64 = length(dst)
-    n = try_decode!(d, dst, src)
-    if n != expected_size
+    n = try_decode!(d, dst, src)::MaybeSize
+    if n.val != expected_size
         throw(DecodedSizeError(expected_size, n))
     else
         dst
@@ -130,13 +132,13 @@ On the domain of `0:typemax(Int64)` this function must not error and must be mon
 function encode_bound end
 
 """
-    try_encode!(e, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+    try_encode!(e, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
 
 Try to encode `src` into `dst` using encoder `e`.
 
 Return the size of the encoded output in `dst` if successful.
 
-If `dst` is too small, return `nothing`.
+If `dst` is too small, return `NOT_SIZE`.
 
 Throw an error if `length(src)` is not in `decoded_size_range(e)`
 
@@ -176,19 +178,20 @@ If the size cannot be quickly determined, return `nothing`.
 
 If the encoded data is found to be invalid, throw a `DecodingError`.
 
-This if an `Int64` is returned, it must be the exact size of the decoded output.
+If an `Int64` is returned, it must be the exact size of the decoded output.
 If [`try_decode!`](@ref) is called with a `dst` of this size, it must succeed and return the same size, or throw an error.
 """
 function try_find_decoded_size end
 
 """
-    try_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+    try_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
 
 Try to decode `src` into `dst` using decoder `d`.
 
 Return the size of the decoded output in `dst` if successful.
 
-If `dst` is too small to fit the decoded output, return `nothing`.
+If `dst` is too small to fit the decoded output, return `NOT_SIZE`.
+If `dst` is too small but a positive hint of the required size can be found, return `MaybeSize(-hint)`.
 
 Throw a [`DecodingError`](@ref) if decoding fails because the input data is not valid.
 
@@ -202,7 +205,7 @@ Only the initial returned number of bytes are valid output.
 function try_decode! end
 
 """
-    try_resize_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}
+    try_resize_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize
 
 Try to decode the input `src` into `dst` using decoder `d`.
 
@@ -210,36 +213,47 @@ Return the size of the decoded output in `dst` if successful.
 
 `dst` can be grown using the `resize!` function to any size between one more than the original length of `dst` and `max_size`.
 
-Return `nothing` if the size of `dst` is too small to contain the decoded output and cannot be grown due to the `max_size` restriction.
+Return `NOT_SIZE` if the size of `dst` is too small to contain the decoded output and cannot be grown due to the `max_size` restriction.
+If a positive hint of the size can be found, return `MaybeSize(-hint)`.
 
 Precondition: `dst` and `src` do not overlap in memory.
 
 All of `dst` can be written to or used as scratch space by the decoder.
 Only the initial returned number of bytes are valid output.
 """
-function try_resize_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}
-    decoded_size = try_find_decoded_size(d, src)::Union{Nothing, Int64}
-    if isnothing(decoded_size)
+function try_resize_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize
+    init_dst_size::Int64 = length(dst)
+    maybe_decoded_size = try_find_decoded_size(d, src)::Union{Nothing, Int64}
+    if isnothing(maybe_decoded_size)
         while true
-            ds = try_decode!(d, dst, src)::Union{Nothing, Int64}
-            if isnothing(ds)
-                if isnothing(grow_dst!(dst, max_size))
-                    return nothing
+            ds = try_decode!(d, dst, src)::MaybeSize
+            if !is_size(ds)
+                if length(dst) ≥ max_size
+                    return ds
+                end
+                local hint = -ds.val
+                if hint ≤ length(dst)
+                    grow_dst!(dst, max_size)
+                else
+                    resize!(dst, min(hint, max_size))
                 end
             else
-                @assert ds ∈ 0:length(dst)
+                @assert Int64(ds) ∈ 0:length(dst)
                 return ds
             end
         end
     else
-        if decoded_size > length(dst)
+        decoded_size = Int64(maybe_decoded_size)
+        @assert !signbit(decoded_size)
+        @assert !signbit(init_dst_size)
+        if decoded_size > init_dst_size
             if decoded_size > max_size
-                return nothing
+                return MaybeSize(-decoded_size)
             end
             resize!(dst, decoded_size)
         end
-        real_dst_size = something(try_decode!(d, dst, src))
-        @assert real_dst_size == decoded_size
+        real_dst_size = try_decode!(d, dst, src)::MaybeSize
+        @assert Int64(real_dst_size) == decoded_size
         return real_dst_size
     end
 end

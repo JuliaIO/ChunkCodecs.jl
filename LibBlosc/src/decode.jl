@@ -49,14 +49,14 @@ function try_find_decoded_size(::BloscDecodeOptions, src::AbstractVector{UInt8})
     end
 end
 
-function try_decode!(d::BloscDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::BloscDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     # This makes sure it is safe to decompress.
-    nbytes = try_find_decoded_size(d, src)
+    nbytes::Int64 = try_find_decoded_size(d, src)
     dst_size::Int64 = length(dst)
     if nbytes > dst_size
-        nothing
+        NOT_SIZE
     else
         numinternalthreads = 1
         sz = ccall((:blosc_decompress_ctx, libblosc), Cint,

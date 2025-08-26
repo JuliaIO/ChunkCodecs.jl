@@ -1,4 +1,4 @@
-using ChunkCodecCore: try_encode!, try_find_decoded_size, encode, decode
+using ChunkCodecCore: try_encode!, try_find_decoded_size, encode, decode, is_size
 using ChunkCodecLibLz4
 using ChunkCodecTests: test_codec
 using Test: @testset, @test_throws, @test
@@ -112,25 +112,25 @@ end
     d = LZ4HDF5DecodeOptions()
     u = rand(UInt8, 1024)
     c = zeros(UInt8, 1024+12+32*4)
-    @test try_encode!(e, c, u) == length(c)
+    @test Int64(try_encode!(e, c, u)) == length(c)
     @test decode(d, c) == u
     for i in 1:length(c)
-        @test isnothing(try_encode!(e, c[1:i-1], u))
+        @test !is_size(try_encode!(e, c[1:i-1], u))
     end
     # zero length
     u = UInt8[]
     c = zeros(UInt8, 12)
-    @test try_encode!(e, c, u) == length(c)
+    @test Int64(try_encode!(e, c, u)) == length(c)
     @test decode(d, c) == u
     for i in 1:length(c)
-        @test isnothing(try_encode!(e, c[1:i-1], u))
+        @test !is_size(try_encode!(e, c[1:i-1], u))
     end
     # one length
     u = UInt8[0x00]
     c = zeros(UInt8, 12+5)
-    @test try_encode!(e, c, u) == length(c)
+    @test Int64(try_encode!(e, c, u)) == length(c)
     @test decode(d, c) == u
     for i in 1:length(c)
-        @test isnothing(try_encode!(e, c[1:i-1], u))
+        @test !is_size(try_encode!(e, c[1:i-1], u))
     end
 end

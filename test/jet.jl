@@ -2,7 +2,10 @@ using JET
 using Test
 
 codec_packages = [
-    :ChunkCodecLibBlosc,
+    :ChunkCodecCore,
+    :ChunkCodecBitshuffle,
+    :ChunkCodecLibAec,
+    # :ChunkCodecLibBlosc,
     :ChunkCodecLibBrotli,
     :ChunkCodecLibBzip2,
     :ChunkCodecLibLz4,

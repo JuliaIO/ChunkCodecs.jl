@@ -125,7 +125,7 @@ _max_decoded_size(::GzipEncodeOptions)::Int64 = 0x7ff60087fa602c66
 
 decoded_size_range(e::_AllEncodeOptions) = Int64(0):Int64(1):_max_decoded_size(e)
 
-function try_encode!(e::_AllEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::_AllEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     # -15: deflate, 15: zlib, 15+16: gzip
     # smaller windowBits might break encode bound
     windowBits = _windowBits(e.codec)
@@ -136,7 +136,7 @@ function try_encode!(e::_AllEncodeOptions, dst::AbstractVector{UInt8}, src::Abst
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
     if iszero(dst_size)
-        return nothing
+        return NOT_SIZE
     end
     stream = ZStream()
     deflateInit2(stream, e.level, windowBits)
@@ -187,7 +187,7 @@ function try_encode!(e::_AllEncodeOptions, dst::AbstractVector{UInt8}, src::Abst
                 end
                 if iszero(dst_left)
                     # no more space, but not Z_STREAM_END
-                    return nothing
+                    return NOT_SIZE
                 end
                 @assert ret == Z_OK
             end

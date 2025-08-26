@@ -98,7 +98,7 @@ function encode_bound(e::LZ4FrameEncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::LZ4FrameEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::LZ4FrameEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -106,7 +106,7 @@ function try_encode!(e::LZ4FrameEncodeOptions, dst::AbstractVector{UInt8}, src::
     check_in_range(decoded_size_range(e); src_size)
     # LZ4F_compressFrame needs this to hold.
     if dst_size < encode_bound(e, src_size)
-        return nothing
+        return NOT_SIZE
     end
     ret = LZ4F_compressFrame(dst, src, _preferences(e))
     if LZ4F_isError(ret)
@@ -158,14 +158,14 @@ function encode_bound(::LZ4BlockEncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::LZ4BlockEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::LZ4BlockEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < 1
-        return nothing
+        return NOT_SIZE
     end
     # src_size must fit in an Int32 because it is in decoded_size_range(e)
     src_size32 = Int32(src_size)
@@ -177,7 +177,7 @@ function try_encode!(e::LZ4BlockEncodeOptions, dst::AbstractVector{UInt8}, src::
         unsafe_lz4_compress(src_p, dst_p, src_size32, clamp(dst_size, Int32), e.compressionLevel)
     end
     if iszero(ret)
-        nothing
+        NOT_SIZE
     else
         Int64(ret)
     end
@@ -228,14 +228,14 @@ function encode_bound(::LZ4NumcodecsEncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::LZ4NumcodecsEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::LZ4NumcodecsEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < 5
-        return nothing
+        return NOT_SIZE
     end
     # src_size must fit in an Int32 because it is in decoded_size_range(e)
     src_size32 = Int32(src_size)
@@ -252,7 +252,7 @@ function try_encode!(e::LZ4NumcodecsEncodeOptions, dst::AbstractVector{UInt8}, s
         unsafe_lz4_compress(src_p, dst_p, src_size32, clamp(dst_size, Int32), e.compressionLevel)
     end
     if iszero(ret)
-        nothing
+        NOT_SIZE
     else
         Int64(ret) + Int64(4)
     end
@@ -309,7 +309,7 @@ function encode_bound(e::LZ4HDF5EncodeOptions, src_size::Int64)::Int64
     end
 end
 
-function try_encode!(e::LZ4HDF5EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::LZ4HDF5EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -317,7 +317,7 @@ function try_encode!(e::LZ4HDF5EncodeOptions, dst::AbstractVector{UInt8}, src::A
     check_in_range(decoded_size_range(e); src_size)
     block_size = clamp(src_size, Int64(1), Int64(e.blockSize))
     if dst_size < 12
-        return nothing
+        return NOT_SIZE
     end
     cconv_src = Base.cconvert(Ptr{UInt8}, src)
     cconv_dst = Base.cconvert(Ptr{UInt8}, dst)
@@ -340,7 +340,7 @@ function try_encode!(e::LZ4HDF5EncodeOptions, dst::AbstractVector{UInt8}, src::A
         dst_p += 4
         while src_left > 0
             if dst_left < 5
-                return nothing
+                return NOT_SIZE
             end
             local b_size = min(src_left, block_size)%Int32
             @assert !iszero(b_size)
@@ -353,7 +353,7 @@ function try_encode!(e::LZ4HDF5EncodeOptions, dst::AbstractVector{UInt8}, src::A
             # but it might be large enough for a copy.
             local c_size = if ret ≥ b_size || iszero(ret)
                 if dst_left < b_size
-                    return nothing
+                    return NOT_SIZE
                 end
                 @static if VERSION ≥ v"1.10"
                     Libc.memcpy(dst_p, src_p, b_size)

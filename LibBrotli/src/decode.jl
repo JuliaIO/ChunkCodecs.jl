@@ -42,11 +42,11 @@ function try_find_decoded_size(::BrotliDecodeOptions, src::AbstractVector{UInt8}
     nothing
 end
 
-function try_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     try_resize_decode!(d, dst, src, Int64(length(dst)))
 end
 
-function try_resize_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::Union{Nothing, Int64}
+function try_resize_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize
     dst_size::Int64 = length(dst)
     src_size::Int64 = length(src)
     src_left::Int64 = src_size
@@ -96,7 +96,7 @@ function try_resize_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, 
                     @assert iszero(dst_left)
                     local next_size = grow_dst!(dst, max_size)
                     if isnothing(next_size)
-                        return nothing
+                        return NOT_SIZE
                     end
                     dst_left += next_size - dst_size
                     dst_size = next_size
@@ -130,6 +130,7 @@ function try_resize_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, 
                 end
             end
         end
+        @assert false "unreachable"
     finally
         @ccall libbrotlidec.BrotliDecoderDestroyInstance(
             s::Ptr{BrotliDecoderState},

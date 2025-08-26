@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- Update to `ChunkCodecCore` 0.6 [#72](https://github.com/JuliaIO/ChunkCodecs.jl/pull/72)
 - Added support for Julia 1.6 [#68](https://github.com/JuliaIO/ChunkCodecs.jl/pull/68)
 
 ## [v0.2.1](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibSnappy-v0.2.1) - 2025-07-28

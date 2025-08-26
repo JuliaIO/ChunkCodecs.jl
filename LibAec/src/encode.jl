@@ -47,14 +47,14 @@ function encode_bound(x::SzipHDF5Codec, src_size::Int64)::Int64
     return cld(max_output_bits, 8) + 4
 end
 
-function try_encode!(e::SzipHDF5Codec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::SzipHDF5Codec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < 4
-        return nothing
+        return NOT_SIZE
     end
     cconv_src = Base.cconvert(Ptr{UInt8}, src)
     cconv_dst = Base.cconvert(Ptr{UInt8}, dst)
@@ -88,7 +88,7 @@ function try_encode!(e::SzipHDF5Codec, dst::AbstractVector{UInt8}, src::Abstract
     elseif ret == SZ_MEM_ERROR
         throw(OutOfMemoryError())
     elseif ret == SZ_OUTBUFF_FULL
-        return nothing
+        return NOT_SIZE
     elseif ret == SZ_PARAM_ERROR
         throw(ArgumentError("invalid szip parameters"))
     else
@@ -127,6 +127,6 @@ decoded_size_range(e::SzipHDF5EncodeOptions) = decoded_size_range(e.codec)
 
 encode_bound(e::SzipHDF5EncodeOptions, src_size::Int64)::Int64 = encode_bound(e.codec, src_size)
 
-function try_encode!(e::SzipHDF5EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::SzipHDF5EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     try_encode!(e.codec, dst, src)
 end

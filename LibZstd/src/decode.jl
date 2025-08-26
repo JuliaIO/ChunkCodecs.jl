@@ -98,7 +98,7 @@ function try_find_decoded_size(::ZstdDecodeOptions, src::AbstractVector{UInt8}):
     return decompressedSize
 end
 
-function try_decode!(d::ZstdDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::ZstdDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     if isempty(src)
@@ -122,7 +122,7 @@ function try_decode!(d::ZstdDecodeOptions, dst::AbstractVector{UInt8}, src::Abst
         if ZSTD_isError(ret)
             err_code = ZSTD_getErrorCode(ret)
             if err_code == Integer(ZSTD_error_dstSize_tooSmall)
-                return nothing
+                return NOT_SIZE
             elseif err_code == Integer(ZSTD_error_memory_allocation)
                 throw(OutOfMemoryError())
             else

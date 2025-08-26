@@ -9,7 +9,9 @@ using ChunkCodecCore:
     check_contiguous,
     check_in_range,
     grow_dst!,
-    DecodingError
+    DecodingError,
+    MaybeSize,
+    NOT_SIZE
 import ChunkCodecCore:
     decode_options,
     try_decode!,

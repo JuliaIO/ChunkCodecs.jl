@@ -8,8 +8,9 @@ using ChunkCodecCore:
     DecodeOptions,
     check_contiguous,
     check_in_range,
-    DecodingError
-
+    DecodingError,
+    MaybeSize,
+    NOT_SIZE
 import ChunkCodecCore:
     can_concatenate,
     try_decode!,

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### BREAKING the return type of `try_encode`, `try_decode`, and `try_resize_decode!` changed to a new `MaybeSize` type [#72](https://github.com/JuliaIO/ChunkCodecs.jl/pull/72)
+
 ## [v0.5.3](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v0.5.3) - 2025-08-09
 
 - Added support for Julia 1.6 [#68](https://github.com/JuliaIO/ChunkCodecs.jl/pull/68)

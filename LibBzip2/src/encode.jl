@@ -43,14 +43,14 @@ function encode_bound(::BZ2EncodeOptions, src_size::Int64)::Int64
     clamp(widen(src_size) + widen(src_size>>6 + Int64(601)), Int64)
 end
 
-function try_encode!(e::BZ2EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BZ2EncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
     if iszero(dst_size)
-        return nothing
+        return NOT_SIZE
     end
     stream = BZStream()
     BZ2_bzCompressInit(stream, e.blockSize100k)
@@ -96,7 +96,7 @@ function try_encode!(e::BZ2EncodeOptions, dst::AbstractVector{UInt8}, src::Abstr
                 end
                 if iszero(dst_left)
                     # no more space, but not BZ_STREAM_END
-                    return nothing
+                    return NOT_SIZE
                 end
                 if action == BZ_RUN
                     @assert ret == BZ_RUN_OK

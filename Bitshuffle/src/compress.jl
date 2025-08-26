@@ -120,14 +120,14 @@ function encode_bound(e::BShufLZEncodeOptions, src_size::Int64)::Int64
     bound
 end
 
-function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     check_in_range(decoded_size_range(e); src_size)
     if dst_size < 12
-        return nothing
+        return NOT_SIZE
     end
     elem_size = e.codec.element_size
     # This get used to write to the header
@@ -155,22 +155,22 @@ function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::A
     # The leftover bytes are copied at the end if needed.
     while src_left ≥ BLOCKED_MULT*elem_size
         if dst_left < 4
-            return nothing # no space for block header
+            return NOT_SIZE # no space for block header
         end
         if src_left < block_size*elem_size
             block_size = fld(src_left, BLOCKED_MULT*elem_size) * BLOCKED_MULT
         end
         src_offset = src_size - src_left
         trans_bit_elem!(tmp_buf_bshuf, Int64(0), src, src_offset, elem_size, block_size)
-        compressed_nbytes = try_encode!(
+        maybe_compressed_nbytes = try_encode!(
             e.options,
             @view(dst[end-dst_left+1+4:end]),
             @view(tmp_buf_bshuf[begin:begin+elem_size*block_size-1])
-        )
-        if isnothing(compressed_nbytes)
-            return nothing # no space for compressed block
+        )::MaybeSize
+        if !is_size(maybe_compressed_nbytes)
+            return NOT_SIZE # no space for compressed block
         end
-        @assert !signbit(compressed_nbytes)
+        compressed_nbytes = Int64(maybe_compressed_nbytes)
         store_int32_BE!(dst, dst_size - dst_left, Int32(compressed_nbytes))
         src_left -= block_size*elem_size
         dst_left -= 4 + compressed_nbytes
@@ -178,7 +178,7 @@ function try_encode!(e::BShufLZEncodeOptions, dst::AbstractVector{UInt8}, src::A
         @assert src_left ∈ 0:src_size
     end
     if src_left > dst_left
-        return nothing # no space for leftover bytes
+        return NOT_SIZE # no space for leftover bytes
     end
     src_offset = src_size - src_left
     dst_offset = dst_size - dst_left
@@ -242,14 +242,14 @@ function try_find_decoded_size(d::BShufLZDecodeOptions, src::AbstractVector{UInt
     end
 end
 
-function try_decode!(d::BShufLZDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_decode!(d::BShufLZDecodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
-    decoded_size = try_find_decoded_size(d, src)
+    decoded_size::Int64 = try_find_decoded_size(d, src)
     src_size::Int64 = length(src)
     dst_size::Int64 = length(dst)
     if decoded_size > dst_size
-        return nothing
+        return NOT_SIZE
     end
     src_left::Int64 = src_size
     dst_left::Int64 = decoded_size
@@ -294,9 +294,9 @@ function try_decode!(d::BShufLZDecodeOptions, dst::AbstractVector{UInt8}, src::A
             d.options,
             @view(tmp_buf_decode[begin:begin+block_size*elem_size-1]),
             @view(src[end-src_left+1:end-src_left+c_size])
-        )
+        )::MaybeSize
         src_left -= c_size
-        if ret != block_size*elem_size
+        if ret.val != block_size*elem_size
             throw(BShufDecodingError("saved decoded size is not correct"))
         end
         untrans_bit_elem!(dst, dst_offset, tmp_buf_decode, Int64(0), elem_size, block_size)

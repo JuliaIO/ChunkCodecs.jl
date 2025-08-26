@@ -61,7 +61,7 @@ function encode_bound(::BloscEncodeOptions, src_size::Int64)::Int64
     clamp(widen(src_size) + widen(BLOSC_MAX_OVERHEAD), Int64)
 end
 
-function try_encode!(e::BloscEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::Union{Nothing, Int64}
+function try_encode!(e::BloscEncodeOptions, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...)::MaybeSize
     check_contiguous(dst)
     check_contiguous(src)
     src_size::Int64 = length(src)
@@ -82,7 +82,7 @@ function try_encode!(e::BloscEncodeOptions, dst::AbstractVector{UInt8}, src::Abs
         e.clevel, e.doshuffle, e.typesize, src_size, src, dst, dst_size, e.compressor, blocksize, numinternalthreads
     )
     if sz == 0
-        nothing
+        NOT_SIZE
     elseif sz < 0
         error("Internal Blosc error: $(sz). This
             should never happen.  If you see this, please report it back
