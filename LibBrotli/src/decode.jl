@@ -130,6 +130,7 @@ function try_resize_decode!(d::BrotliDecodeOptions, dst::AbstractVector{UInt8}, 
                 end
             end
         end
+        @assert false "unreachable"
     finally
         @ccall libbrotlidec.BrotliDecoderDestroyInstance(
             s::Ptr{BrotliDecoderState},
