@@ -101,17 +101,6 @@ Return the default decode options for the codec.
 function decode_options end
 
 """
-    can_concatenate(::Codec)::Bool
-
-Return `true` if the codec has concatenation transparency.
-
-If `true`, and some encoded data `a` and `b` decode to `x` and `y` respectively, then
-the concatenation of `a` and `b` will
-decode to the concatenation of `x` and `y`
-"""
-can_concatenate(::Codec) = false
-
-"""
     decoded_size_range(e)::StepRange{Int64, Int64}
 
 Return the range of allowed `src` sizes for encoding.
@@ -258,10 +247,22 @@ function try_resize_decode!(d, dst::AbstractVector{UInt8}, src::AbstractVector{U
     end
 end
 
+"""
+    can_concatenate(d)::Bool
+
+Return `true` if the decoder has concatenation transparency.
+
+If `true`, and some encoded data `a` and `b` decode to `x` and `y` respectively, then
+the concatenation of `a` and `b` will
+decode to the concatenation of `x` and `y`
+"""
+can_concatenate(::Any) = false
+
 # allow passing codec to decode
 try_find_decoded_size(c::Codec, src::AbstractVector{UInt8}) = try_find_decoded_size(decode_options(c), src)
 try_decode!(c::Codec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}; kwargs...) = try_decode!(decode_options(c), dst, src; kwargs...)
 try_resize_decode!(c::Codec, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...) = try_resize_decode!(decode_options(c), dst, src, max_size; kwargs...)
+can_concatenate(c::Codec) = can_concatenate(decode_options(c))
 
 """
     check_contiguous(x::AbstractVector{UInt8})

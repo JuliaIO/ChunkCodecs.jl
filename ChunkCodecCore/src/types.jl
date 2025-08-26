@@ -7,9 +7,6 @@ Properties are public for reading.
 
 Required methods for a type `T <: Codec` to implement:
 - `decode_options(::T)::DecodeOptions`
-
-Optional methods to implement:
-- `can_concatenate(::T)::Bool`: defaults to `false`.
 """
 abstract type Codec end
 
@@ -51,6 +48,7 @@ Required methods for a type `T <: DecodeOptions` to implement:
 
 Optional methods to implement:
 - `is_thread_safe(::T)::Bool`: defaults to `false`.
+- `can_concatenate(::T)::Bool`: defaults to `false`.
 - `try_resize_decode!(::T, dst::AbstractVector{UInt8}, src::AbstractVector{UInt8}, max_size::Int64; kwargs...)::MaybeSize`: defaults to using `try_decode!` and `try_find_decoded_size`
 """
 abstract type DecodeOptions end

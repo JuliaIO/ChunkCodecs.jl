@@ -66,7 +66,6 @@ See also [`ZstdEncodeOptions`](@ref) and [`ZstdDecodeOptions`](@ref)
 struct ZstdCodec <: Codec
 end
 decode_options(::ZstdCodec) = ZstdDecodeOptions()
-can_concatenate(::ZstdCodec) = true
 
 include("encode.jl")
 include("decode.jl")
