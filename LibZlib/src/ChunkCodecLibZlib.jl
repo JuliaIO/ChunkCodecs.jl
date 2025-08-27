@@ -92,8 +92,6 @@ decode_options(::GzipCodec) = GzipDecodeOptions()
 # windowBits setting for the codec
 _windowBits(::GzipCodec) = Cint(15+16)
 
-can_concatenate(::GzipCodec) = true
-
 include("encode.jl")
 include("decode.jl")
 
