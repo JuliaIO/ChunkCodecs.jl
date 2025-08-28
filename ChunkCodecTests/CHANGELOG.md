@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v0.1.7](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecTests-v0.1.7) - 2025-08-28
+
 - Fix for `test_encoder_decoder` resizing. [#75](https://github.com/JuliaIO/ChunkCodecs.jl/pull/75)
 
 ## [v0.1.6](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecTests-v0.1.6) - 2025-08-26
