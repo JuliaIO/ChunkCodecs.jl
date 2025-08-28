@@ -126,7 +126,7 @@ function test_encoder_decoder(e, d; trials=100)
         dst = view(dst_buffer, 1:s+1)
         @test try_resize_decode!(d, dst, encoded, s-1) === MaybeSize(s)
         @test try_resize_decode!(d, dst, encoded, s) === MaybeSize(s)
-        @test try_resize_decode!(d, dst, encoded, s+2) === MaybeSize(s)
+        @test try_resize_decode!(d, dst, encoded, s+1) === MaybeSize(s)
         @test length(dst) == s + 1
         @test dst[1:s] == data
         @test dst_buffer[end] == 0x00
