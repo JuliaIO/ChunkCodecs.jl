@@ -9,6 +9,8 @@ Throw an error if `length(src)` is not in `decoded_size_range(e)`.
 
 Otherwise throw an error.
 
+Precondition: `src` has a stride of 1.
+
 See also [`EncodeOptions`](@ref) and [`decode`](@ref).
 """
 function encode(e, src::AbstractVector{UInt8})::Vector{UInt8}
@@ -41,6 +43,8 @@ Otherwise throw an error.
 
 If you have a good idea of what the decoded size is, using the `size_hint` keyword argument
 can greatly improve performance.
+
+Precondition: `src` has a stride of 1.
 
 See also [`DecodeOptions`](@ref) and [`encode`](@ref)
 """
@@ -80,6 +84,8 @@ Throw a [`DecodingError`](@ref) if decoding fails because the input data is not 
 Otherwise throw an error.
 
 Precondition: `dst` and `src` do not overlap in memory.
+
+Precondition: `src` and `dst` have a stride of 1.
 
 See also [`decode`](@ref) and [`encode`](@ref)
 """
@@ -135,6 +141,8 @@ Otherwise throw an error.
 
 Precondition: `dst` and `src` do not overlap in memory.
 
+Precondition: `src` and `dst` have a stride of 1.
+
 All of `dst` can be written to or used as scratch space by the encoder.
 Only the initial returned number of bytes are valid output.
 
@@ -188,6 +196,8 @@ Otherwise throw an error.
 
 Precondition: `dst` and `src` do not overlap in memory.
 
+Precondition: `src` and `dst` have a stride of 1.
+
 All of `dst` can be written to or used as scratch space by the decoder.
 Only the initial returned number of bytes are valid output.
 """
@@ -206,6 +216,8 @@ Return `NOT_SIZE` if the size of `dst` is too small to contain the decoded outpu
 If a positive hint of the size can be found, return `MaybeSize(-hint)`.
 
 Precondition: `dst` and `src` do not overlap in memory.
+
+Precondition: `src` and `dst` have a stride of 1.
 
 All of `dst` can be written to or used as scratch space by the decoder.
 Only the initial returned number of bytes are valid output.
