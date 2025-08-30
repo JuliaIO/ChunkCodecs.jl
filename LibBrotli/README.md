@@ -1,7 +1,5 @@
 # ChunkCodecLibBrotli
 
-## Warning: ChunkCodecLibBrotli is currently a WIP and its API may drastically change at any time.
-
 This package implements the ChunkCodec interface for the following encoders and decoders
 using the brotli C library <https://brotli.org/>
 
