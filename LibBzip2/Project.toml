@@ -1,7 +1,7 @@
 name = "ChunkCodecLibBzip2"
 uuid = "2b723af9-f480-4e8d-a1e4-4a9f5a906122"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-version = "0.3.0"
+version = "1.0.0"
 
 [deps]
 Bzip2_jll = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
@@ -9,7 +9,7 @@ ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
 
 [compat]
 Bzip2_jll = "1"
-ChunkCodecCore = "0.6, 1"
+ChunkCodecCore = "1"
 julia = "1.6"
 
 [workspace]
