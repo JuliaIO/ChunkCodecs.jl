@@ -1,7 +1,5 @@
 # ChunkCodecLibBzip2
 
-## Warning: ChunkCodecLibBzip2 is currently a WIP and its API may drastically change at any time.
-
 This package implements the ChunkCodec interface for the following encoders and decoders
 using the bzip2 C library <https://sourceware.org/bzip2/>
 
