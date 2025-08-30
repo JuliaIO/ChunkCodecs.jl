@@ -1,8 +1,6 @@
-# ChunkCodecs (WIP)
+# ChunkCodecs
 
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
-
-## Warning: ChunkCodecs is currently a WIP. Suggestions for major API changes are welcome.
 
 A consistent Julia interface for lossless encoding and decoding of bytes in memory.
 
