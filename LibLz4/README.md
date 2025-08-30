@@ -1,7 +1,5 @@
 # ChunkCodecLibLz4
 
-## Warning: ChunkCodecLibLz4 is currently a WIP and its API may drastically change at any time.
-
 This package implements the ChunkCodec interface for the following encoders and decoders
 using the lz4 C library <https://lz4.org/>
 
