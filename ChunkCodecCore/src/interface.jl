@@ -286,6 +286,7 @@ function check_contiguous(x::AbstractVector{UInt8})
     y = Base.cconvert(Ptr{UInt8}, x)
     GC.@preserve y Base.unsafe_convert(Ptr{UInt8}, y)
     isone(only(strides(x))) || throw(ArgumentError("vector is not contiguous in memory"))
+    isone(Base.elsize(typeof(x))) || throw(ArgumentError("vector is not contiguous in memory"))
     Int64(length(x))
     @assert !signbit(length(x))
     nothing
