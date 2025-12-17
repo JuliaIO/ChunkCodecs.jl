@@ -55,6 +55,10 @@ jobs:
             - ChunkCodecCore/**
             - ChunkCodecTests/**
             - LibLz4/**
+          LibLzma:
+            - ChunkCodecCore/**
+            - ChunkCodecTests/**
+            - LibLzma/**
           LibSnappy:
             - ChunkCodecCore/**
             - ChunkCodecTests/**

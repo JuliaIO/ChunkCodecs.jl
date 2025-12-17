@@ -9,6 +9,7 @@ ChunkCodecLibBlosc = "c6a955be-ab7f-4fbb-b38f-caf93db6b928"
 ChunkCodecLibBrotli = "653b0ff7-85b5-4442-93c1-dcc330d3ec7d"
 ChunkCodecLibBzip2 = "2b723af9-f480-4e8d-a1e4-4a9f5a906122"
 ChunkCodecLibLz4 = "7e9cc85e-5614-42a3-ad86-b78f920b38a5"
+ChunkCodecLibLzma = "e95d29e5-19c5-4afd-ae0f-beb790efacdf"
 ChunkCodecLibSnappy = "eac87354-86d5-4a5b-ab5f-a6ee56b239b3"
 ChunkCodecLibZlib = "4c0bbee4-addc-4d73-81a0-b6caacae83c8"
 ChunkCodecLibZstd = "55437552-ac27-4d47-9aa3-63184e8fd398"
@@ -34,6 +35,7 @@ ChunkCodecLibBlosc = {path = "../LibBlosc"}
 ChunkCodecLibBrotli = {path = "../LibBrotli"}
 ChunkCodecLibBzip2 = {path = "../LibBzip2"}
 ChunkCodecLibLz4 = {path = "../LibLz4"}
+ChunkCodecLibLzma = {path = "../LibLzma"}
 ChunkCodecLibSnappy = {path = "../LibSnappy"}
 ChunkCodecLibZlib = {path = "../LibZlib"}
 ChunkCodecLibZstd = {path = "../LibZstd"}

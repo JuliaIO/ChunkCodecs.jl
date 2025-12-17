@@ -6,6 +6,7 @@ using
     ChunkCodecLibBrotli,
     ChunkCodecLibBzip2,
     ChunkCodecLibLz4,
+    ChunkCodecLibLzma,
     ChunkCodecLibSnappy,
     ChunkCodecLibZlib,
     ChunkCodecLibZstd,
@@ -14,6 +15,7 @@ using ChunkCodecTests: rand_test_data
 using Test
 
 codecs = [
+    (ChunkCodecLibLzma.XZEncodeOptions(),     ("lzma",     (;)), 50),
     (
         ChunkCodecBitshuffle.BShufEncodeOptions(codec=ChunkCodecBitshuffle.BShufCodec(
             1,

@@ -8,6 +8,7 @@ projects = [
     "LibBrotli",
     "LibBzip2",
     "LibLz4",
+    "LibLzma",
     "LibSnappy",
     "LibZlib",
     "LibZstd",
