@@ -57,10 +57,10 @@ function encode_bound(::XZEncodeOptions, src_size::Int64)::Int64
         typemax(Int64)
     else
         res = @ccall liblzma.lzma_stream_buffer_bound(src_size::Csize_t)::Csize_t
-        if iszero(res)
+        if iszero(res) || res > typemax(Int64)
             typemax(Int64)
         else
-            clamp(res, Int64)
+            res%Int64
         end
     end
 end

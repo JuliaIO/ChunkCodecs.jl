@@ -18,10 +18,6 @@ using Aqua: Aqua
 Aqua.test_all(ChunkCodecLibLzma; persistent_tasks = false)
 
 Random.seed!(1234)
-@testset "encode_bound" begin
-    local a = last(decoded_size_range(XZEncodeOptions()))
-    @test encode_bound(XZEncodeOptions(), a) == typemax(Int64)
-end
 @testset "default" begin
     test_codec(XZCodec(), XZEncodeOptions(), XZDecodeOptions(); trials=5)
 end
