@@ -31,7 +31,7 @@ function XZEncodeOptions(;
         check::Int32=LZMA_CHECK_CRC64,
         kwargs...
     )
-    check_in_range(UInt32(0):LZMA_CHECK_ID_MAX; check)
+    check_in_range(Int32(0):LZMA_CHECK_ID_MAX; check)
     XZEncodeOptions(
         codec,
         preset,

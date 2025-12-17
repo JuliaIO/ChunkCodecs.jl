@@ -12,7 +12,7 @@ julia> using ChunkCodecLibLzma
 
 julia> data = [0x00, 0x01, 0x02, 0x03];
 
-julia> compressed_data = encode(XZEncodeOptions(;prefix=UInt32(6), check=ChunkCodecLibLzma.LZMA_CHECK_CRC64), data);
+julia> compressed_data = encode(XZEncodeOptions(;preset=UInt32(6), check=ChunkCodecLibLzma.LZMA_CHECK_CRC64), data);
 
 julia> decompressed_data = decode(XZCodec(), compressed_data; max_size=length(data), size_hint=length(data));
 
