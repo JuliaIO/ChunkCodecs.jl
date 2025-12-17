@@ -1,5 +1,5 @@
 using Random: Random
-using ChunkCodecCore: encode_bound, decoded_size_range, encode, decode
+using ChunkCodecCore: encode_bound, decoded_size_range, encode, decode, try_encode!, is_size
 using ChunkCodecLibLzma:
     ChunkCodecLibLzma,
     XZCodec,
@@ -35,6 +35,7 @@ end
 @testset "check options" begin
     @test_throws ArgumentError XZEncodeOptions(; check=Int32(-1))
     @test_throws ArgumentError XZEncodeOptions(; check=Int32(16))
+    @test_throws ArgumentError encode(XZEncodeOptions(; check=Int32(15)), UInt8[])
     for check in [LZMA_CHECK_NONE, LZMA_CHECK_CRC32, LZMA_CHECK_CRC64, LZMA_CHECK_SHA256]
         test_codec(XZCodec(), XZEncodeOptions(; check), XZDecodeOptions(); trials=5)
     end
@@ -130,4 +131,8 @@ end
         "LZMADecodingError: LZMA_OPTIONS_ERROR: reserved bits set in headers. Data corrupt, or upgrading liblzma may help"
     @test sprint(Base.showerror, LZMADecodingError(-100)) ==
         "LZMADecodingError: unknown lzma error code: -100"
+end
+@testset "not enough dst space try_encode!" begin
+    @test !is_size(try_encode!(XZEncodeOptions(), UInt8[], UInt8[]))
+    @test !is_size(try_encode!(XZEncodeOptions(), UInt8[], UInt8[0x00]))
 end
