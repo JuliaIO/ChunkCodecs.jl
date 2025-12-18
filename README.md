@@ -6,25 +6,26 @@ A consistent Julia interface for lossless encoding and decoding of bytes in memo
 
 ## Available Formats
 
-| Name | Other Names | Package | Encoding | Decoding |
-|---|---|---|---|---|
-| Zstd | .zst RFC8878 | ChunkCodecLibZstd | ✅ | ✅ |
-| Zlib | RFC1950 | ChunkCodecLibZlib | ✅ | ✅ |
-| SzipHDF5 |  | ChunkCodecLibAec | ✅ | ✅ |
-| Snappy |  | ChunkCodecLibSnappy | ✅ | ✅ |
-| Shuffle |  | ChunkCodecCore | ✅ | ✅ |
-| Noop |  | ChunkCodecCore | ✅ | ✅ |
-| LZ4Numcodecs |  | ChunkCodecLibLz4 | ✅ | ✅ |
-| LZ4HDF5 |  | ChunkCodecLibLz4 | ✅ | ✅ |
-| LZ4Frame | .lz4 | ChunkCodecLibLz4 | ✅ | ✅ |
-| LZ4Block |  | ChunkCodecLibLz4 | ✅ | ✅ |
-| Gzip | .gz RFC1952 | ChunkCodecLibZlib | ✅ | ✅ |
-| Deflate | RFC1951 | ChunkCodecLibZlib | ✅ | ✅ |
-| BZ2 | .bz2 bzip2 | ChunkCodecLibBzip2 | ✅ | ✅ |
-| BShufLZ |  | ChunkCodecBitshuffle | ✅ | ✅ |
-| BShuf |  | ChunkCodecBitshuffle | ✅ | ✅ |
-| Brotli | .br RFC7932 | ChunkCodecLibBrotli | ✅ | ✅ |
-| Blosc |  | ChunkCodecLibBlosc | ✅ | ✅ |
+| Name | Other Names | Package | Encoding | Decoding | Stable API |
+|---|---|---|---|---|---|
+| Zstd | .zst RFC8878 | ChunkCodecLibZstd | ✅ | ✅ | ✅ |
+| Zlib | RFC1950 | ChunkCodecLibZlib | ✅ | ✅ | ✅ |
+| XZ | .xz | ChunkCodecLibLzma | ✅ | ✅ |  |
+| SzipHDF5 |  | ChunkCodecLibAec | ✅ | ✅ |  |
+| Snappy |  | ChunkCodecLibSnappy | ✅ | ✅ | ✅ |
+| Shuffle |  | ChunkCodecCore | ✅ | ✅ | ✅ |
+| Noop |  | ChunkCodecCore | ✅ | ✅ | ✅ |
+| LZ4Numcodecs |  | ChunkCodecLibLz4 | ✅ | ✅ | ✅ |
+| LZ4HDF5 |  | ChunkCodecLibLz4 | ✅ | ✅ | ✅ |
+| LZ4Frame | .lz4 | ChunkCodecLibLz4 | ✅ | ✅ | ✅ |
+| LZ4Block |  | ChunkCodecLibLz4 | ✅ | ✅ | ✅ |
+| Gzip | .gz RFC1952 | ChunkCodecLibZlib | ✅ | ✅ | ✅ |
+| Deflate | RFC1951 | ChunkCodecLibZlib | ✅ | ✅ | ✅ |
+| BZ2 | .bz2 bzip2 | ChunkCodecLibBzip2 | ✅ | ✅ | ✅ |
+| BShufLZ |  | ChunkCodecBitshuffle | ✅ | ✅ |  |
+| BShuf |  | ChunkCodecBitshuffle | ✅ | ✅ |  |
+| Brotli | .br RFC7932 | ChunkCodecLibBrotli | ✅ | ✅ | ✅ |
+| Blosc |  | ChunkCodecLibBlosc | ✅ | ✅ |  |
 
 ## Simple encoding and decoding
 

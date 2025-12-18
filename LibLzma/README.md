@@ -1,5 +1,7 @@
 # ChunkCodecLibLzma
 
+## Warning: ChunkCodecLibLzma is currently a WIP and its API may drastically change at any time.
+
 This package implements the ChunkCodec interface for the following encoders and decoders
 using the liblzma C library <https://tukaani.org/xz/>
 
