@@ -9,6 +9,7 @@ codec_packages = [
     :ChunkCodecLibBrotli,
     :ChunkCodecLibBzip2,
     :ChunkCodecLibLz4,
+    :ChunkCodecLibLzma,
     :ChunkCodecLibSnappy,
     :ChunkCodecLibZlib,
     :ChunkCodecLibZstd,
