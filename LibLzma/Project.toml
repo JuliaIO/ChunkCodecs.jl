@@ -1,10 +1,7 @@
 name = "ChunkCodecLibLzma"
 uuid = "e95d29e5-19c5-4afd-ae0f-beb790efacdf"
-version = "0.1.0"
 authors = ["nhz2 <nhz2@cornell.edu>"]
-
-[workspace]
-projects = ["test"]
+version = "0.1.1"
 
 [deps]
 ChunkCodecCore = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
@@ -14,3 +11,6 @@ XZ_jll = "ffd25f8a-64ca-5728-b0f7-c24cf3aae800"
 ChunkCodecCore = "1"
 XZ_jll = "5"
 julia = "1.6"
+
+[workspace]
+projects = ["test"]
