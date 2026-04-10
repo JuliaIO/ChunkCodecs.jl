@@ -55,6 +55,22 @@ tests = [
             test_codec(codec(), encode_opt(; level=i), decode_opt(); trials=5)
         end
     end
+    @testset "strategy options" begin
+        # strategy must be in 0:4
+        @test_throws ArgumentError encode_opt(; strategy=-1)
+        @test_throws ArgumentError encode_opt(; strategy=5)
+        for i in 0:4
+            @test encode_opt(; strategy=i).strategy == i
+            test_codec(codec(), encode_opt(; strategy=i), decode_opt(); trials=5)
+        end
+    end
+    @testset "combined options" begin
+        for level in -1:9
+            for strategy in 0:4
+                test_codec(codec(), encode_opt(;level, strategy), decode_opt(); trials=5)
+            end
+        end
+    end
     @testset "unexpected eof" begin
         local d = decode_opt()
         local u = [0x00, 0x01, 0x02]
