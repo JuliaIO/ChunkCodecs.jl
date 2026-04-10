@@ -1,3 +1,34 @@
+const level_docs = """
+- `level::Integer=-1`: The compression level must be -1, or between 0 and 9.
+
+  1 gives best speed, 9 gives best compression, 0 gives no compression at all
+  (the input data is simply copied a block at a time). -1
+  requests a default compromise between speed and compression (currently
+  equivalent to level 6).
+"""
+
+const strategy_docs = """
+- `strategy::Integer=$(Z_DEFAULT_STRATEGY)`: The compression strategy must be between $(Z_DEFAULT_STRATEGY) and $(Z_FIXED).
+
+  The strategy parameter is used to tune the compression algorithm. It only
+  affects the compression ratio but not the correctness of the compressed
+  output even if it is not set appropriately.
+
+  - $(Z_DEFAULT_STRATEGY) (`Z_DEFAULT_STRATEGY`) is used for normal data.
+  - $(Z_FILTERED) (`Z_FILTERED`) is used for data produced by a filter (or predictor).
+    Filtered data consists mostly of small values with a somewhat random
+    distribution. In this case, the compression algorithm is tuned to compress
+    them better. The effect of `Z_FILTERED` is to force more Huffman coding
+    and less string matching; it is somewhat intermediate between
+    `Z_DEFAULT_STRATEGY` and `Z_HUFFMAN_ONLY`.
+  - $(Z_HUFFMAN_ONLY) (`Z_HUFFMAN_ONLY`) forces Huffman encoding only (no string match).
+  - $(Z_RLE) (`Z_RLE`) limits match distances to one (run-length encoding). `Z_RLE`
+    is designed to be almost as fast as `Z_HUFFMAN_ONLY`, but gives better
+    compression for PNG image data.
+  - $(Z_FIXED) (`Z_FIXED`) prevents the use of dynamic Huffman codes, allowing for a
+    simpler decoder for special applications.
+"""
+
 """
     struct ZlibEncodeOptions <: EncodeOptions
     ZlibEncodeOptions(; kwargs...)
@@ -9,25 +40,25 @@ This is the zlib format described in RFC 1950
 # Keyword Arguments
 
 - `codec::ZlibCodec=ZlibCodec()`
-- `level::Integer=-1`: The compression level must be -1, or between 0 and 9.
-
-  1 gives best speed, 9 gives best compression, 0 gives no compression at all
-  (the input data is simply copied a block at a time). -1
-  requests a default compromise between speed and compression (currently
-  equivalent to level 6).
+$(level_docs)
+$(strategy_docs)
 """
 struct ZlibEncodeOptions <: EncodeOptions
     codec::ZlibCodec
     level::Int32
+    strategy::Int32
 end
 function ZlibEncodeOptions(;
         codec::ZlibCodec=ZlibCodec(),
         level::Integer=-1,
+        strategy::Integer=Z_DEFAULT_STRATEGY,
         kwargs...
     )
+    check_in_range(Z_DEFAULT_STRATEGY:Z_FIXED; strategy)
     ZlibEncodeOptions(
         codec,
         Int32(clamp(level, -1, 9)),
+        Int32(strategy),
     )
 end
 
@@ -42,25 +73,25 @@ This is the deflate format described in RFC 1951
 # Keyword Arguments
 
 - `codec::DeflateCodec=DeflateCodec()`
-- `level::Integer=-1`: The compression level must be -1, or between 0 and 9.
-
-  1 gives best speed, 9 gives best compression, 0 gives no compression at all
-  (the input data is simply copied a block at a time). -1
-  requests a default compromise between speed and compression (currently
-  equivalent to level 6).
+$(level_docs)
+$(strategy_docs)
 """
 struct DeflateEncodeOptions <: EncodeOptions
     codec::DeflateCodec
     level::Int32
+    strategy::Int32
 end
 function DeflateEncodeOptions(;
         codec::DeflateCodec=DeflateCodec(),
         level::Integer=-1,
+        strategy::Integer=Z_DEFAULT_STRATEGY,
         kwargs...
     )
+    check_in_range(Z_DEFAULT_STRATEGY:Z_FIXED; strategy)
     DeflateEncodeOptions(
         codec,
         Int32(clamp(level, -1, 9)),
+        Int32(strategy),
     )
 end
 
@@ -75,25 +106,25 @@ This is the gzip (.gz) format described in RFC 1952
 # Keyword Arguments
 
 - `codec::GzipCodec=GzipCodec()`
-- `level::Integer=-1`: The compression level must be -1, or between 0 and 9.
-
-  1 gives best speed, 9 gives best compression, 0 gives no compression at all
-  (the input data is simply copied a block at a time). -1
-  requests a default compromise between speed and compression (currently
-  equivalent to level 6).
+$(level_docs)
+$(strategy_docs)
 """
 struct GzipEncodeOptions <: EncodeOptions
     codec::GzipCodec
     level::Int32
+    strategy::Int32
 end
 function GzipEncodeOptions(;
         codec::GzipCodec=GzipCodec(),
         level::Integer=-1,
+        strategy::Integer=Z_DEFAULT_STRATEGY,
         kwargs...
     )
+    check_in_range(Z_DEFAULT_STRATEGY:Z_FIXED; strategy)
     GzipEncodeOptions(
         codec,
         Int32(clamp(level, -1, 9)),
+        Int32(strategy),
     )
 end
 
@@ -139,7 +170,7 @@ function try_encode!(e::_AllEncodeOptions, dst::AbstractVector{UInt8}, src::Abst
         return NOT_SIZE
     end
     stream = ZStream()
-    deflateInit2(stream, e.level, windowBits)
+    deflateInit2(stream, e.level, windowBits, e.strategy)
     try
         # deflate loop
         cconv_src = Base.cconvert(Ptr{UInt8}, src)

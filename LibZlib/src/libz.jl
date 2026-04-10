@@ -87,14 +87,18 @@ mutable struct ZStream
     end
 end
 
-function deflateInit2(stream::ZStream, level::Cint, windowBits::Cint)
+function deflateInit2(stream::ZStream, level::Cint, windowBits::Cint, strategy::Cint)
     memLevel = Cint(8) # default
-    ret = ccall(
-        (:deflateInit2_, libz),
-        Cint,
-        (Ref{ZStream}, Cint, Cint, Cint, Cint, Cint, Cstring, Cint),
-        stream, level, Z_DEFLATED, windowBits, memLevel, Z_DEFAULT_STRATEGY, ZLIB_VERSION, sizeof(ZStream),
-    )
+    ret = @ccall libz.deflateInit2_(
+        stream::Ref{ZStream},
+        level::Cint,
+        Z_DEFLATED::Cint,
+        windowBits::Cint,
+        memLevel::Cint,
+        strategy::Cint,
+        ZLIB_VERSION::Cstring,
+        sizeof(ZStream)::Cint,
+    )::Cint
     if ret != Z_OK
         if ret == Z_MEM_ERROR
             throw(OutOfMemoryError())
