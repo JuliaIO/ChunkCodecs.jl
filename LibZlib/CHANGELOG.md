@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v1.1.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibZlib-v1.1.0) - 2026-07-06
+
 - Added `strategy` keyword argument to `ZlibEncodeOptions`, `DeflateEncodeOptions`, and `GzipEncodeOptions` to expose zlib's compression strategy (`Z_DEFAULT_STRATEGY`, `Z_FILTERED`, `Z_HUFFMAN_ONLY`, `Z_RLE`, `Z_FIXED`).
 
 ## [v1.0.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibZlib-v1.0.0) - 2025-08-29
