@@ -46,6 +46,26 @@ end
 
 decode_options(x::ShuffleCodec) = ShuffleDecodeOptions(;codec=x) # default decode options
 
+# Kernels with a compile time known element size get auto vectorized by LLVM,
+# unlike the dynamic element size fallback loops.
+function _shuffle_kernel!(dst, src, n_elements::Int64, ::Val{element_size}) where {element_size}
+    @inbounds for j in 0:(n_elements-1)
+        for i in 0:(element_size-1)
+            dst[begin + j + n_elements*i] = src[begin + i + element_size*j]
+        end
+    end
+    nothing
+end
+
+function _unshuffle_kernel!(dst, src, n_elements::Int64, ::Val{element_size}) where {element_size}
+    @inbounds for j in 0:(n_elements-1)
+        for i in 0:(element_size-1)
+            dst[begin + i + element_size*j] = src[begin + j + n_elements*i]
+        end
+    end
+    nothing
+end
+
 # Allow ShuffleCodec to be used as an encoder
 decoded_size_range(::ShuffleCodec) = Int64(0):Int64(1):typemax(Int64)-Int64(1)
 
@@ -64,9 +84,19 @@ function try_encode!(e::ShuffleCodec, dst::AbstractVector{UInt8}, src::AbstractV
             return src_size
         end
         n_elements, n_remainder = fldmod(src_size, element_size)
-        @inbounds for i in 0:(element_size-1)
-            for j in 0:(n_elements-1)
-                dst[begin + j + n_elements*i] = src[begin + i + element_size*j]
+        if element_size == 2
+            _shuffle_kernel!(dst, src, n_elements, Val(2))
+        elseif element_size == 3
+            _shuffle_kernel!(dst, src, n_elements, Val(3))
+        elseif element_size == 4
+            _shuffle_kernel!(dst, src, n_elements, Val(4))
+        elseif element_size == 8
+            _shuffle_kernel!(dst, src, n_elements, Val(8))
+        else
+            @inbounds for i in 0:(element_size-1)
+                for j in 0:(n_elements-1)
+                    dst[begin + j + n_elements*i] = src[begin + i + element_size*j]
+                end
             end
         end
         offset = n_elements*element_size
@@ -145,9 +175,19 @@ function try_decode!(d::ShuffleDecodeOptions, dst::AbstractVector{UInt8}, src::A
             return MaybeSize(src_size)
         end
         n_elements, n_remainder = fldmod(src_size, element_size)
-        @inbounds for i in 0:(element_size-1)
-            for j in 0:(n_elements-1)
-                dst[begin + i + element_size*j] = src[begin + j + n_elements*i]
+        if element_size == 2
+            _unshuffle_kernel!(dst, src, n_elements, Val(2))
+        elseif element_size == 3
+            _unshuffle_kernel!(dst, src, n_elements, Val(3))
+        elseif element_size == 4
+            _unshuffle_kernel!(dst, src, n_elements, Val(4))
+        elseif element_size == 8
+            _unshuffle_kernel!(dst, src, n_elements, Val(8))
+        else
+            @inbounds for i in 0:(element_size-1)
+                for j in 0:(n_elements-1)
+                    dst[begin + i + element_size*j] = src[begin + j + n_elements*i]
+                end
             end
         end
         offset = n_elements*element_size
