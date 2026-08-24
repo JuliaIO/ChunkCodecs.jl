@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v1.0.2](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v1.0.2) - 2026-08-23
+
+- Improved `ShuffleCodec` performance for element sizes 2, 3, 4, and 8. [#92](https://github.com/JuliaIO/ChunkCodecs.jl/pull/92)
+
 ## [v1.0.1](https://github.com/JuliaIO/ChunkCodecs.jl/tree/ChunkCodecCore-v1.0.1) - 2025-12-13
 
 - Added check for `Base.elsize` in `check_contiguous`. [#84](https://github.com/JuliaIO/ChunkCodecs.jl/pull/84)

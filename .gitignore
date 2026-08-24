@@ -11,3 +11,5 @@ fixture
 .CondaPkg
 *.cov
 /temp/
+/agent-depot/
+/agent-logs/
