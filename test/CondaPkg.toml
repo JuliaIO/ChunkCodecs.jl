@@ -1,4 +1,7 @@
+[deps]
+python = ">=3.12,<3.13"
+
 [pip.deps]
-imagecodecs = "==2025.11.11"
+imagecodecs = "==2026.8.16"
 hdf5plugin = "==5.1.0"
 h5py = "==3.13.0"

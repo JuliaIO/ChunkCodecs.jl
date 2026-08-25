@@ -20,5 +20,5 @@ for p in codec_packages
 end
 
 @testset "$(p)" for p in codec_packages
-    JET.test_package(string(p))
+    JET.test_package(getproperty(@__MODULE__, p))
 end
