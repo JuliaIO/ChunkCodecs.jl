@@ -17,32 +17,33 @@ Blosc compression using c-blosc library: https://github.com/Blosc/c-blosc
   For implementation reasons, only `typesize` in `1:$(BLOSC_MAX_TYPESIZE)` will allow the
   shuffle filter to work.  When `typesize` is not in this range, shuffle
   will be silently disabled.
-- `compressor::AbstractString="lz4"`: The string representing the type of compressor to use.
-
-  For example, "blosclz", "lz4", "lz4hc", "zlib", or "zstd".
-  Use `is_compressor_valid` to check if a compressor is supported.
 - `compcode::Union{Nothing, Integer}=nothing`: The integer code of the compressor to use.
 
   The available options are:
   `BLOSC_BLOSCLZ`, `BLOSC_LZ4`, `BLOSC_LZ4HC`, `BLOSC_ZLIB`, `BLOSC_ZSTD`
 
-  If set, overrides the `compressor` argument.
-  If neither is set, the "lz4" compressor is used.
+- `compressor::Union{Nothing, String}=nothing`: The string representing the type of compressor to use.
+
+  For example, "blosclz", "lz4", "lz4hc", "zlib", or "zstd".
+  Use `is_compressor_valid` to check if a compressor is supported.
+
+  Setting both `compcode` and `compressor` throws an `ArgumentError`.
+  If neither is set, the `BLOSC_LZ4` compressor is used.
 """
 struct BloscEncodeOptions <: EncodeOptions
     codec::BloscCodec
     clevel::Int32
     doshuffle::Int32
     typesize::Int64
-    compressor::String
+    compcode::Int32
 end
 function BloscEncodeOptions(;
         codec::BloscCodec=BloscCodec(),
         clevel::Integer=5,
         doshuffle::Integer=1,
         typesize::Integer=1,
-        compressor::AbstractString="lz4",
         compcode::Union{Nothing, Integer}=nothing,
+        compressor::Union{Nothing, String}=nothing,
         kwargs...
     )
     _clevel = Int32(clamp(clevel, 0, 9))
@@ -52,18 +53,24 @@ function BloscEncodeOptions(;
     else
         Int64(1)
     end
-    _compressor = if !isnothing(compcode)
-        compname(compcode)
+    _compcode = if isnothing(compressor)
+        if isnothing(compcode)
+            BLOSC_LZ4
+        else
+            check_in_range((BLOSC_BLOSCLZ, BLOSC_LZ4, BLOSC_LZ4HC, BLOSC_ZLIB, BLOSC_ZSTD); compcode)
+            Int32(compcode)
+        end
+    elseif isnothing(compcode)
+        ChunkCodecLibBlosc.compcode(compressor)
     else
-        is_compressor_valid(compressor) || throw(ArgumentError("is_compressor_valid(compressor) must hold. Got\ncompressor => $(repr(compressor))"))
-        String(compressor)
-    end::String
+        throw(ArgumentError("compcode and compressor cannot both be set. Got\ncompcode => $(compcode)\ncompressor => $(repr(compressor))"))
+    end::Int32
     BloscEncodeOptions(
         codec,
         _clevel,
         doshuffle,
         _typesize,
-        _compressor,
+        _compcode,
     )
 end
 
@@ -88,12 +95,20 @@ function try_encode!(e::BloscEncodeOptions, dst::AbstractVector{UInt8}, src::Abs
         dst_size = src_size + BLOSC_MAX_OVERHEAD
     end
 
-    blocksize = 0 # automatic blocksize
-    numinternalthreads = 1
-    sz = ccall((:blosc_compress_ctx, libblosc), Cint,
-        (Cint, Cint, Csize_t, Csize_t, Ptr{Cvoid}, Ptr{Cvoid}, Csize_t, Cstring, Csize_t, Cint),
-        e.clevel, e.doshuffle, e.typesize, src_size, src, dst, dst_size, e.compressor, blocksize, numinternalthreads
-    )
+    blocksize = Csize_t(0) # automatic blocksize
+    numinternalthreads = Cint(1)
+    sz = @ccall libblosc.blosc_compress_ctx(
+        e.clevel::Cint,
+        e.doshuffle::Cint,
+        e.typesize::Csize_t,
+        src_size::Csize_t,
+        src::Ptr{Cvoid},
+        dst::Ptr{Cvoid},
+        dst_size::Csize_t,
+        compname(e.compcode)::Cstring,
+        blocksize::Csize_t,
+        numinternalthreads::Cint,
+    )::Cint
     if sz == 0
         NOT_SIZE
     elseif sz < 0
