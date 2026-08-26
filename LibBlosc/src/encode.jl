@@ -21,7 +21,7 @@ Blosc compression using c-blosc library: https://github.com/Blosc/c-blosc
 
   For example, "blosclz", "lz4", "lz4hc", "zlib", or "zstd".
   Use `is_compressor_valid` to check if a compressor is supported.
-- `compcode::Union{Nothing, Int32}=nothing`: The integer code of the compressor to use.
+- `compcode::Union{Nothing, Integer}=nothing`: The integer code of the compressor to use.
 
   The available options are:
   `BLOSC_BLOSCLZ`, `BLOSC_LZ4`, `BLOSC_LZ4HC`, `BLOSC_ZLIB`, `BLOSC_ZSTD`
@@ -42,7 +42,7 @@ function BloscEncodeOptions(;
         doshuffle::Integer=1,
         typesize::Integer=1,
         compressor::AbstractString="lz4",
-        compcode::Union{Nothing, Int32}=nothing,
+        compcode::Union{Nothing, Integer}=nothing,
         kwargs...
     )
     _clevel = Int32(clamp(clevel, 0, 9))
