@@ -67,14 +67,20 @@ end
 Return the compressor name corresponding to the internal integer code used by Blosc.
 Throws an `ArgumentError` if `compcode` is not a valid code.
 """
-function compname(compcode::Integer)
-    refstr = Ref(Ptr{UInt8}(0))
-    retcode = @ccall libblosc.blosc_compcode_to_compname(
-        compcode::Cint,
-        refstr::Ref{Ptr{UInt8}},
-    )::Cint
-    retcode == -1 && throw(ArgumentError("unrecognized compcode $compcode"))
-    unsafe_string(refstr[])
+function compname(compcode::Integer)::String
+    if compcode == BLOSC_BLOSCLZ
+        "blosclz"
+    elseif compcode == BLOSC_LZ4
+        "lz4"
+    elseif compcode == BLOSC_LZ4HC
+        "lz4hc"
+    elseif compcode == BLOSC_ZLIB
+        "zlib"
+    elseif compcode == BLOSC_ZSTD
+        "zstd"
+    else
+        throw(ArgumentError("unrecognized compcode $compcode"))
+    end
 end
 
 

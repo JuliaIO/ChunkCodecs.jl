@@ -75,6 +75,7 @@ end
     @test_throws ArgumentError BloscEncodeOptions(;compressor="blosclz\0")
     @test_throws ArgumentError BloscEncodeOptions(;compcode=Int32(-1))
     @test_throws ArgumentError BloscEncodeOptions(;compcode=Int32(100))
+    @test_throws ArgumentError BloscEncodeOptions(;compcode=Int64(2)^40)
 end
 @testset "compcode and compname" begin
     @test ChunkCodecLibBlosc.compcode("blosclz") == 0
