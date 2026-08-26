@@ -21,6 +21,13 @@ Blosc compression using c-blosc library: https://github.com/Blosc/c-blosc
 
   For example, "blosclz", "lz4", "lz4hc", "zlib", or "zstd".
   Use `is_compressor_valid` to check if a compressor is supported.
+- `compcode::Union{Nothing, Integer}=nothing`: The integer code of the compressor to use.
+
+  The available options are:
+  `BLOSC_BLOSCLZ`, `BLOSC_LZ4`, `BLOSC_LZ4HC`, `BLOSC_ZLIB`, `BLOSC_ZSTD`
+
+  If set, overrides the `compressor` argument.
+  If neither is set, the "lz4" compressor is used.
 """
 struct BloscEncodeOptions <: EncodeOptions
     codec::BloscCodec
@@ -35,6 +42,7 @@ function BloscEncodeOptions(;
         doshuffle::Integer=1,
         typesize::Integer=1,
         compressor::AbstractString="lz4",
+        compcode::Union{Nothing, Integer}=nothing,
         kwargs...
     )
     _clevel = Int32(clamp(clevel, 0, 9))
@@ -44,13 +52,18 @@ function BloscEncodeOptions(;
     else
         Int64(1)
     end
-    is_compressor_valid(compressor) || throw(ArgumentError("is_compressor_valid(compressor) must hold. Got\ncompressor => $(repr(compressor))"))
+    _compressor = if !isnothing(compcode)
+        compname(compcode)
+    else
+        is_compressor_valid(compressor) || throw(ArgumentError("is_compressor_valid(compressor) must hold. Got\ncompressor => $(repr(compressor))"))
+        String(compressor)
+    end::String
     BloscEncodeOptions(
         codec,
         _clevel,
         doshuffle,
         _typesize,
-        compressor,
+        _compressor,
     )
 end
 

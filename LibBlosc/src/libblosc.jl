@@ -24,6 +24,14 @@ const BLOSC_NOSHUFFLE  = Int64(0)  # no shuffle
 const BLOSC_SHUFFLE    = Int64(1)  # byte-wise shuffle
 const BLOSC_BITSHUFFLE = Int64(2)  # bit-wise shuffle
 
+# Codes for the different compressors shipped with Blosc
+const BLOSC_BLOSCLZ = Int32(0)
+const BLOSC_LZ4     = Int32(1)
+const BLOSC_LZ4HC   = Int32(2)
+# const BLOSC_SNAPPY  = Int32(3)  # snappy is not supported by the Blosc_jll build
+const BLOSC_ZLIB    = Int32(4)
+const BLOSC_ZSTD    = Int32(5)
+
 """
     is_compressor_valid(s::AbstractString)::Bool
 
@@ -31,7 +39,9 @@ Check if a compressor name is valid.
 """
 function is_compressor_valid(s::AbstractString)
     '\0' ∈ s && return false
-    ret = ccall((:blosc_compname_to_compcode, libblosc), Cint, (Cstring,), s)
+    ret = @ccall libblosc.blosc_compname_to_compcode(
+        s::Cstring
+    )::Cint
     return ret != -1
 end
 
@@ -43,7 +53,9 @@ Return a nonnegative integer code used internally by Blosc to identify the compr
 Throws an `ArgumentError` if `s` is not the name of a supported algorithm.
 """
 function compcode(s::AbstractString)
-    compcode = ccall((:blosc_compname_to_compcode, libblosc), Cint, (Cstring,), s)
+    compcode = @ccall libblosc.blosc_compname_to_compcode(
+        s::Cstring
+    )::Cint
     compcode == -1 && throw(ArgumentError("unrecognized compressor $(repr(s))"))
     compcode
 end
@@ -55,11 +67,20 @@ end
 Return the compressor name corresponding to the internal integer code used by Blosc.
 Throws an `ArgumentError` if `compcode` is not a valid code.
 """
-function compname(compcode::Integer)
-    refstr = Ref(Ptr{UInt8}(0))
-    retcode = ccall((:blosc_compcode_to_compname, libblosc), Cint, (Cint, Ref{Ptr{UInt8}}), compcode, refstr)
-    retcode == -1 && throw(ArgumentError("unrecognized compcode $compcode"))
-    unsafe_string(refstr[])
+function compname(compcode::Integer)::String
+    if compcode == BLOSC_BLOSCLZ
+        "blosclz"
+    elseif compcode == BLOSC_LZ4
+        "lz4"
+    elseif compcode == BLOSC_LZ4HC
+        "lz4hc"
+    elseif compcode == BLOSC_ZLIB
+        "zlib"
+    elseif compcode == BLOSC_ZSTD
+        "zstd"
+    else
+        throw(ArgumentError("unrecognized compcode $compcode"))
+    end
 end
 
 

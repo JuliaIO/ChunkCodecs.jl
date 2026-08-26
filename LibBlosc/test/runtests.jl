@@ -4,7 +4,12 @@ using ChunkCodecLibBlosc:
     BloscCodec,
     BloscEncodeOptions,
     BloscDecodeOptions,
-    BloscDecodingError
+    BloscDecodingError,
+    BLOSC_BLOSCLZ,
+    BLOSC_LZ4,
+    BLOSC_LZ4HC,
+    BLOSC_ZLIB,
+    BLOSC_ZSTD
 using ChunkCodecCore: decode, encode
 using ChunkCodecTests: test_codec
 using Test: @testset, @test_throws, @test
@@ -24,10 +29,31 @@ end
 end
 @testset "compressors" begin
     for clevel in 0:9
-        for compressor in ["blosclz", "lz4", "lz4hc", "zlib", "zstd"]
-            test_codec(BloscCodec(), BloscEncodeOptions(;compressor, clevel), BloscDecodeOptions(); trials=10)
+        for compcode in [BLOSC_BLOSCLZ, BLOSC_LZ4, BLOSC_LZ4HC, BLOSC_ZLIB, BLOSC_ZSTD]
+            test_codec(BloscCodec(), BloscEncodeOptions(;compcode, clevel), BloscDecodeOptions(); trials=10)
         end
     end
+end
+@testset "compcode kwarg" begin
+    for (compcode, compressor) in [
+            BLOSC_BLOSCLZ => "blosclz",
+            BLOSC_LZ4 => "lz4",
+            BLOSC_LZ4HC => "lz4hc",
+            BLOSC_ZLIB => "zlib",
+            BLOSC_ZSTD => "zstd",
+        ]
+        e = BloscEncodeOptions(;compcode)
+        @test e.compressor == compressor
+        e = BloscEncodeOptions(;compressor)
+        @test e.compressor == compressor
+    end
+    # neither compressor nor compcode set defaults to lz4
+    @test BloscEncodeOptions().compressor == "lz4"
+    # setting compcode is used when both are specified.
+    @test BloscEncodeOptions(;compressor="lz4", compcode=BLOSC_ZSTD).compressor == "zstd"
+    # the Blosc_jll build does not include snappy support
+    @test_throws ArgumentError BloscEncodeOptions(;compcode=Int32(3))
+    @test_throws ArgumentError BloscEncodeOptions(;compressor="snappy")
 end
 @testset "invalid options" begin
     @test BloscEncodeOptions(;clevel=-1).clevel == 0
@@ -47,6 +73,9 @@ end
     @test_throws ArgumentError BloscEncodeOptions(;compressor="asfdgfsdgrwwea")
     @test_throws ArgumentError BloscEncodeOptions(;compressor="blosclz,")
     @test_throws ArgumentError BloscEncodeOptions(;compressor="blosclz\0")
+    @test_throws ArgumentError BloscEncodeOptions(;compcode=Int32(-1))
+    @test_throws ArgumentError BloscEncodeOptions(;compcode=Int32(100))
+    @test_throws ArgumentError BloscEncodeOptions(;compcode=Int64(2)^40)
 end
 @testset "compcode and compname" begin
     @test ChunkCodecLibBlosc.compcode("blosclz") == 0

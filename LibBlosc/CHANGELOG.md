@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v0.3.2](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibBlosc-v0.3.2) - 2026-08-26
+
+- Added a `compcode` keyword argument for `BloscEncodeOptions` and constants `BLOSC_BLOSCLZ`, `BLOSC_LZ4`, `BLOSC_LZ4HC`, `BLOSC_ZLIB`, and `BLOSC_ZSTD` [#94](https://github.com/JuliaIO/ChunkCodecs.jl/pull/94)
+
 ## [v0.3.1](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibBlosc-v0.3.1) - 2025-08-29
 
 - Update to `ChunkCodecCore` 1
