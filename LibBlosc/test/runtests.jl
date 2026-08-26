@@ -30,7 +30,7 @@ end
 @testset "compressors" begin
     for clevel in 0:9
         for compcode in [BLOSC_BLOSCLZ, BLOSC_LZ4, BLOSC_LZ4HC, BLOSC_ZLIB, BLOSC_ZSTD]
-            test_codec(BloscCodec(), BloscEncodeOptions(;BLOSC_ZSTD, clevel), BloscDecodeOptions(); trials=10)
+            test_codec(BloscCodec(), BloscEncodeOptions(;compcode, clevel), BloscDecodeOptions(); trials=10)
         end
     end
 end
@@ -43,6 +43,8 @@ end
             BLOSC_ZSTD => "zstd",
         ]
         e = BloscEncodeOptions(;compcode)
+        @test e.compressor == compressor
+        e = BloscEncodeOptions(;compressor)
         @test e.compressor == compressor
     end
     # neither compressor nor compcode set defaults to lz4
