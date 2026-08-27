@@ -1,7 +1,5 @@
 # Constants and c wrapper functions ported to Julia from blosc.h https://github.com/Blosc/c-blosc/blob/3455c3810279ce709cf02f45beddbb31af418ab6/blosc/blosc.h
 
-# `compcode` and `compname` functions are from https://github.com/JuliaIO/Blosc.jl/blob/25d663c607542cbebaea45542619726fec71bb5e/src/Blosc.jl#L339C1-L362C4
-
 # The *_FORMAT symbols should be just 1-byte long
 const BLOSC_VERSION_FORMAT   = Int64(2)   # Blosc format version, starting at 1
 
@@ -32,55 +30,50 @@ const BLOSC_LZ4HC   = Int32(2)
 const BLOSC_ZLIB    = Int32(4)
 const BLOSC_ZSTD    = Int32(5)
 
+const _COMP_CODE_NAME = (
+    BLOSC_BLOSCLZ => "blosclz",
+    BLOSC_LZ4 => "lz4",
+    BLOSC_LZ4HC => "lz4hc",
+    BLOSC_ZLIB => "zlib",
+    BLOSC_ZSTD => "zstd",
+)
+
 """
-    is_compressor_valid(s::AbstractString)::Bool
+    is_compressor_valid(s::String)::Bool
 
 Check if a compressor name is valid.
 """
-function is_compressor_valid(s::AbstractString)
-    '\0' ∈ s && return false
-    ret = @ccall libblosc.blosc_compname_to_compcode(
-        s::Cstring
-    )::Cint
-    return ret != -1
+function is_compressor_valid(s::String)
+    for (code, name) in _COMP_CODE_NAME
+        s == name && return true
+    end
+    return false
 end
 
-# From https://github.com/JuliaIO/Blosc.jl/blob/25d663c607542cbebaea45542619726fec71bb5e/src/Blosc.jl#L339C1-L362C4
 """
-    compcode(s::AbstractString)
+    compcode(s::String)::Int32
 
-Return a nonnegative integer code used internally by Blosc to identify the compressor.
+Return a nonnegative integer code used by Blosc to identify the compressor.
 Throws an `ArgumentError` if `s` is not the name of a supported algorithm.
 """
-function compcode(s::AbstractString)
-    compcode = @ccall libblosc.blosc_compname_to_compcode(
-        s::Cstring
-    )::Cint
-    compcode == -1 && throw(ArgumentError("unrecognized compressor $(repr(s))"))
-    compcode
+function compcode(s::String)::Int32
+    for (code, name) in _COMP_CODE_NAME
+        s == name && return code
+    end
+    throw(ArgumentError("unrecognized compressor $(repr(s))"))
 end
 
-# From https://github.com/JuliaIO/Blosc.jl/blob/25d663c607542cbebaea45542619726fec71bb5e/src/Blosc.jl#L339C1-L362C4
 """
-    compname(compcode::Integer)
+    compname(compcode::Integer)::String
 
 Return the compressor name corresponding to the internal integer code used by Blosc.
 Throws an `ArgumentError` if `compcode` is not a valid code.
 """
 function compname(compcode::Integer)::String
-    if compcode == BLOSC_BLOSCLZ
-        "blosclz"
-    elseif compcode == BLOSC_LZ4
-        "lz4"
-    elseif compcode == BLOSC_LZ4HC
-        "lz4hc"
-    elseif compcode == BLOSC_ZLIB
-        "zlib"
-    elseif compcode == BLOSC_ZSTD
-        "zstd"
-    else
-        throw(ArgumentError("unrecognized compcode $compcode"))
+    for (code, name) in _COMP_CODE_NAME
+        compcode == code && return name
     end
+    throw(ArgumentError("unrecognized compcode $compcode"))
 end
 
 

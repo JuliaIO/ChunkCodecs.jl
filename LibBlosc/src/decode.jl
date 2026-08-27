@@ -58,11 +58,13 @@ function try_decode!(d::BloscDecodeOptions, dst::AbstractVector{UInt8}, src::Abs
     if nbytes > dst_size
         NOT_SIZE
     else
-        numinternalthreads = 1
-        sz = ccall((:blosc_decompress_ctx, libblosc), Cint,
-            (Ptr{Cvoid}, Ptr{Cvoid}, Csize_t, Cint),
-            src, dst, dst_size, numinternalthreads
-        )
+        numinternalthreads = Cint(1)
+        sz = @ccall libblosc.blosc_decompress_ctx(
+            src::Ptr{Cvoid},
+            dst::Ptr{Cvoid},
+            dst_size::Csize_t,
+            numinternalthreads::Cint,
+        )::Cint
         if sz == nbytes
             nbytes
         else

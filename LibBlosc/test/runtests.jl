@@ -43,14 +43,15 @@ end
             BLOSC_ZSTD => "zstd",
         ]
         e = BloscEncodeOptions(;compcode)
-        @test e.compressor == compressor
+        @test e.compcode == compcode
         e = BloscEncodeOptions(;compressor)
-        @test e.compressor == compressor
+        @test e.compcode == compcode
     end
     # neither compressor nor compcode set defaults to lz4
-    @test BloscEncodeOptions().compressor == "lz4"
-    # setting compcode is used when both are specified.
-    @test BloscEncodeOptions(;compressor="lz4", compcode=BLOSC_ZSTD).compressor == "zstd"
+    @test BloscEncodeOptions().compcode == BLOSC_LZ4
+    # setting both is an error, even if they agree.
+    @test_throws ArgumentError BloscEncodeOptions(;compressor="zlib", compcode=BLOSC_ZSTD)
+    @test_throws ArgumentError BloscEncodeOptions(;compressor="lz4", compcode=BLOSC_LZ4)
     # the Blosc_jll build does not include snappy support
     @test_throws ArgumentError BloscEncodeOptions(;compcode=Int32(3))
     @test_throws ArgumentError BloscEncodeOptions(;compressor="snappy")
