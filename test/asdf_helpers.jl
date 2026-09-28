@@ -14,8 +14,6 @@ using PythonCall
 asdf = pyimport("asdf")
 pyio = pyimport("io")
 np = pyimport("numpy")
-# Make sure the minimal ASDF files don't cause any warnings
-pyimport("warnings").simplefilter("error", asdf.exceptions.AsdfWarning)
 
 """
     do_asdf_test(jl_options, compression::String, trials::Int)

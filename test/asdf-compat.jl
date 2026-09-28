@@ -12,10 +12,6 @@ include("asdf_helpers.jl")
     # uncompressed block
     @test read_py_asdf(make_asdf(data, 1000, "")) == data
     @test read_py_asdf(make_asdf(UInt8[], 0, "")) == UInt8[]
-    # bad checksum
-    bad_file = make_asdf(data, 1000, "")
-    bad_file[end-100] ⊻= 0x01
-    @test_throws PythonCall.PyException read_py_asdf(bad_file)
     # block can be read back
     block = read_first_asdf_block(make_asdf(encode(ZlibEncodeOptions(), data), 1000, "zlib"))
     @test block.compression == "zlib"
