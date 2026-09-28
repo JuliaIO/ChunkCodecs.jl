@@ -5,6 +5,7 @@ projects = [
     "ChunkCodecTests",
     "LibAec",
     "LibBlosc",
+    "LibBlosc2",
     "LibBrotli",
     "LibBzip2",
     "LibLz4",
