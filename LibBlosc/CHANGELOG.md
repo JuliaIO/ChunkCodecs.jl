@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v1.0.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibBlosc-v1.0.0) - 2026-09-28
+
+### The API is now stable
+
 ## [v0.4.0](https://github.com/JuliaIO/ChunkCodecs.jl/tree/LibBlosc-v0.4.0) - 2026-08-26
 
 - BREAKING changed the `BloscEncodeOptions` `compressor::String` field to `compcode::Int32`.
