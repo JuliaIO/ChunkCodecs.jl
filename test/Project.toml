@@ -1,5 +1,4 @@
 [deps]
-ASDF = "686f71d1-807d-59a4-a860-28280ea06d7b"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Blosc = "a74b3585-a348-5f62-a45c-50e91977d574"
