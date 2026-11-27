@@ -83,6 +83,7 @@ jobs:
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
         os:
           - ubuntu-latest
+          - ubuntu-24.04-arm
           - windows-latest
           - macos-latest
         version:
@@ -93,6 +94,8 @@ jobs:
           - 'x86'
         exclude:
           - os: macos-latest
+            arch: 'x86'
+          - os: ubuntu-24.04-arm
             arch: 'x86'
           - os: ubuntu-latest
             version: '1.6'
