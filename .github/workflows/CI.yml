@@ -51,6 +51,8 @@ jobs:
     name: Julia ${{ matrix.version }} - ${{matrix.package}} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     needs: changes
+    # An empty package matrix is an error, so skip if no packages changed
+    if: needs.changes.outputs.packages != '[]'
     strategy:
       fail-fast: false
       matrix:
