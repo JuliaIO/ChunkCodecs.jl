@@ -20,61 +20,39 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      # Expose matched filters as job 'packages' output variable
-      packages: ${{ steps.filter.outputs.changes }}
+      # JSON array of packages to test
+      packages: ${{ steps.select.outputs.packages }}
     steps:
     - uses: actions/checkout@v7
     - uses: dorny/paths-filter@v4
       id: filter
       with:
+        # One filter per package, adding a package doesn't require editing this file.
+        filters: .github/package-filters.yml
+    - uses: dorny/paths-filter@v4
+      id: ci
+      with:
         filters: |
-          Bitshuffle:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - Bitshuffle/**
-          ChunkCodecCore:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-          LibAec:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibAec/**
-          LibBlosc:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibBlosc/**
-          LibBrotli:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibBrotli/**
-          LibBzip2:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibBzip2/**
-          LibLz4:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibLz4/**
-          LibLzma:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibLzma/**
-          LibSnappy:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibSnappy/**
-          LibZlib:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibZlib/**
-          LibZstd:
-            - ChunkCodecCore/**
-            - ChunkCodecTests/**
-            - LibZstd/**
+          ci:
+            - .github/workflows/CI.yml
+    - name: Select packages to test
+      id: select
+      env:
+        CHANGED: ${{ steps.filter.outputs.changes }}
+        CI_CHANGED: ${{ steps.ci.outputs.ci }}
+      run: |
+        if [ "$CI_CHANGED" = "true" ]; then
+          # The CI workflow itself changed, so test every package
+          echo "packages=$(yq -o=json -I=0 'keys' .github/package-filters.yml)" >> "$GITHUB_OUTPUT"
+        else
+          echo "packages=$CHANGED" >> "$GITHUB_OUTPUT"
+        fi
   test:
     name: Julia ${{ matrix.version }} - ${{matrix.package}} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     needs: changes
+    # An empty package matrix is an error, so skip if no packages changed
+    if: needs.changes.outputs.packages != '[]'
     strategy:
       fail-fast: false
       matrix:
@@ -83,6 +61,7 @@ jobs:
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
         os:
           - ubuntu-latest
+          - ubuntu-24.04-arm
           - windows-latest
           - macos-latest
         version:
@@ -93,6 +72,8 @@ jobs:
           - 'x86'
         exclude:
           - os: macos-latest
+            arch: 'x86'
+          - os: ubuntu-24.04-arm
             arch: 'x86'
           - os: ubuntu-latest
             version: '1.6'

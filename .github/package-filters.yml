@@ -1,0 +1,43 @@
+Bitshuffle:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - Bitshuffle/**
+ChunkCodecCore:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+LibAec:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibAec/**
+LibBlosc:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibBlosc/**
+LibBrotli:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibBrotli/**
+LibBzip2:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibBzip2/**
+LibLz4:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibLz4/**
+LibLzma:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibLzma/**
+LibSnappy:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibSnappy/**
+LibZlib:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibZlib/**
+LibZstd:
+  - ChunkCodecCore/**
+  - ChunkCodecTests/**
+  - LibZstd/**
